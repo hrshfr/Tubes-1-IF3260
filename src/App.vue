@@ -3,6 +3,8 @@
     <div id="container-canvas-button">
       <div id="container-button">
         <button @click="(e)=>{this.currentSelectedObject='rectangle'}" class="button">Rectangle</button>
+        <button @click="(e)=>{this.currentSelectedObject='line'}" class="button">Line</button>
+        <button @click="(e)=>{this.currentSelectedObject='select'}" class="button">Select</button>
         <input type="color" id="color-picker" @change="(e)=>{this.currentColor = e.target.value}">
         <button class="button" @click="saveFile">Save</button>
         <input id="load" class="button" type="file" accept=".json" @input="(e)=>loadFile()">
@@ -123,6 +125,21 @@ export default {
       console.log(this.allObjects)
     },
 
+    drawLine(x1,y1,x2,y2,color){
+      
+      const vertexData = [
+        x1, y1,
+        x2, y2,        
+      ]
+
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(vertexData), this.gl.STATIC_DRAW);
+
+      this.gl.uniform4f(this.colorUniformLocation, color[0], color[1], color[2], 1);
+      this.gl.drawArrays(this.gl.LINES, 0, 2);
+      this.allObjects.unshift({'object':'line','x1':x1,'y1':y1,'x2':x2,'y2':y2,'color':color})
+      console.log(this.allObjects)
+    },
+
     hexToRGB(hex){
       var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
       return result ? [parseInt(result[1], 16)/255,parseInt(result[2], 16)/255,parseInt(result[3], 16)/255] : null;
@@ -131,7 +148,48 @@ export default {
     drawCanvas(e){
       if (this.currentSelectedObject == 'rectangle'){
         this.drawRectangle(e.offsetX, e.offsetY, 200, 150, this.hexToRGB(this.currentColor))
+      } else if (this.currentSelectedObject == 'line'){
+        this.drawLine(e.offsetX, e.offsetY, e.offsetX+100, e.offsetY, this.hexToRGB(this.currentColor))
+      } else if (this.currentSelectedObject == 'select'){
+        this.vertexPicking(e);
       }
+    },
+
+    vertexPicking(e) {
+      let nearestIdx = -999;
+      let nearestObj = -999;
+      for (let i = 0; i < this.allObjects.length; i++) {
+        let minDist = 100;
+        if (this.allObjects[i].object == 'line') {
+          const line = this.allObjects[i];
+          let v1 = this.euclideanDistance(e.offsetX, e.offsetY, line.x1, line.y1);
+          let v2 = this.euclideanDistance(e.offsetX, e.offsetY, line.x2, line.y2);
+          if (v1 < minDist) {
+            minDist = v1;
+            nearestIdx = 1;
+          }
+          if (v2 < minDist) {
+            minDist = v2;
+            nearestIdx = 2;
+          }
+        }
+        if (minDist <= 10){
+          nearestObj = i;
+          break;
+        }
+      }
+      if ((nearestIdx == -999) || (nearestObj == -999)){
+        console.log([null, null]);
+        return [null, null];
+      }
+      else {
+        console.log([nearestIdx, nearestObj]);
+        return [nearestIdx, nearestObj];
+      }
+    },
+
+    euclideanDistance(x1, y1, x2, y2) {
+      return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
     },
 
     saveFile(){
