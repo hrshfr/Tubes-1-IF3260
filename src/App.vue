@@ -15,6 +15,7 @@
 </template>
 
 <script>
+import { isInside, euclideanDistance } from './utils.js';
 
 export default {
   name: 'App',
@@ -136,7 +137,7 @@ export default {
 
       this.gl.uniform4f(this.colorUniformLocation, color[0], color[1], color[2], 1);
       this.gl.drawArrays(this.gl.LINES, 0, 2);
-      this.allObjects.unshift({'object':'line','x1':x1,'y1':y1,'x2':x2,'y2':y2,'color':color})
+      this.allObjects.unshift({'object':'line','v':[[x1,y1],[x2,y2]],'color':color})
       console.log(this.allObjects)
     },
 
@@ -151,45 +152,99 @@ export default {
       } else if (this.currentSelectedObject == 'line'){
         this.drawLine(e.offsetX, e.offsetY, e.offsetX+100, e.offsetY, this.hexToRGB(this.currentColor))
       } else if (this.currentSelectedObject == 'select'){
-        this.vertexPicking(e);
+        this.selectObject(e);
       }
     },
 
-    vertexPicking(e) {
-      let nearestIdx = -999;
-      let nearestObj = -999;
-      for (let i = 0; i < this.allObjects.length; i++) {
-        let minDist = 100;
-        if (this.allObjects[i].object == 'line') {
-          const line = this.allObjects[i];
-          let v1 = this.euclideanDistance(e.offsetX, e.offsetY, line.x1, line.y1);
-          let v2 = this.euclideanDistance(e.offsetX, e.offsetY, line.x2, line.y2);
-          if (v1 < minDist) {
-            minDist = v1;
-            nearestIdx = 1;
-          }
-          if (v2 < minDist) {
-            minDist = v2;
-            nearestIdx = 2;
-          }
-        }
-        if (minDist <= 10){
-          nearestObj = i;
-          break;
-        }
-      }
-      if ((nearestIdx == -999) || (nearestObj == -999)){
+    vertexPicking(e, objIdx) {
+      
+      if (objIdx == null){
         console.log([null, null]);
         return [null, null];
       }
-      else {
-        console.log([nearestIdx, nearestObj]);
-        return [nearestIdx, nearestObj];
+
+      let nearestIdx = null;
+      let minDist = 10;
+
+      // line
+      if (this.allObjects[objIdx].object == 'line') {
+        const line = this.allObjects[objIdx];
+        let v1 = euclideanDistance(e.offsetX, e.offsetY, line.v[0][0], line.v[0][1]);
+        let v2 = euclideanDistance(e.offsetX, e.offsetY, line.v[1][0], line.v[1][1]);
+
+        if (v1 < minDist) {
+          minDist = v1;
+          nearestIdx = 0;
+        }
+        if (v2 < minDist) {
+          minDist = v2;
+          nearestIdx = 1;
+        }
+
       }
+
+      // square and rectangle
+      else if (this.allObjects[objIdx].object == 'square' || this.allObjects[objIdx].object == 'rectangle') {
+        const rect = this.allObjects[objIdx];
+        let vertices = [[rect.x, rect.y], [rect.x + rect.width, rect.y], [rect.x + rect.width, rect.y + rect.height], [rect.x, rect.y + rect.height]]
+        
+        for (let i = 0; i < vertices.length; i++) {
+          let v = euclideanDistance(e.offsetX, e.offsetY, vertices[i][0], vertices[i][1]);
+          console.log(v);
+          if (v < minDist) {
+            minDist = v;
+            nearestIdx = i;
+          }
+        }
+      }
+
+      else if (this.allObjects[objIdx].object == 'polygon') {
+        // polygon
+      }
+      
+      // output
+      console.log([nearestIdx, objIdx]);
+      return [nearestIdx, objIdx];
+
     },
 
-    euclideanDistance(x1, y1, x2, y2) {
-      return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    selectObject(e) {
+      let objIdx = null;
+
+      for (let i = 0; i < this.allObjects.length; i++) {
+        // line
+        if (this.allObjects[i].object == 'line') {
+          const line = this.allObjects[i];
+          let eq = Math.abs((e.offsetY - line.v[0][1]) * (line.v[1][0] - line.v[0][0]) - (e.offsetX - line.v[0][0]) * (line.v[1][1] - line.v[0][1]))
+          
+          if (eq < 500) {
+            objIdx = i;
+          }
+
+        }
+
+        // rectangle and square
+        else if (this.allObjects[i].object == 'rectangle' || this.allObjects[i].object == 'square') {
+          const rect = this.allObjects[i];
+          let vertices = [[rect.x, rect.y], [rect.x + rect.width, rect.y], [rect.x + rect.width, rect.y + rect.height], [rect.x, rect.y + rect.height]]
+          let mousePos = [e.offsetX, e.offsetY]
+
+          if (isInside(vertices, mousePos)) {
+            objIdx = i;
+          }
+
+        }
+
+        else if (this.allObjects[i].object == 'polygon') {
+          // polygon
+        }
+
+      }
+
+      if (objIdx != null) {
+        this.vertexPicking(e, objIdx);
+      }
+      //return objIdx;
     },
 
     saveFile(){
