@@ -3,6 +3,7 @@
     <div id="container-canvas-button">
       <div id="container-button">
         <button @click="(e)=>{this.currentSelectedObject='rectangle'}" class="button">Rectangle</button>
+        <button @click="(e)=>{this.currentSelectedObject='square'}" class="button">Square</button>
         <button @click="(e)=>{this.currentSelectedObject='line'}" class="button">Line</button>
         <button @click="(e)=>{this.currentSelectedObject='select'}" class="button">Select</button>
         <input type="color" id="color-picker" @change="(e)=>{this.currentColor = e.target.value}">
@@ -125,6 +126,28 @@ export default {
       this.allObjects.unshift({'object':'rectangle','x':x,'y':y,'width':width,'height':height,'color':color})
       console.log(this.allObjects)
     },
+    drawSquare(x,y,side,color){
+      var x1 = x;
+      var x2 = x + side;
+      var y1 = y;
+      var y2 = y + side;
+
+      const vertexData = [
+        x1, y1,
+        x2, y1,
+        x1, y2,
+        x1, y2,
+        x2, y1,
+        x2, y2,        
+      ]
+
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(vertexData), this.gl.STATIC_DRAW);
+
+      this.gl.uniform4f(this.colorUniformLocation, color[0], color[1], color[2], 1);
+      this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+      this.allObjects.unshift({'object':'square','x':x,'y':y,'width':side,'height':side,'color':color})
+      console.log(this.allObjects)
+    },
 
     drawLine(x1,y1,x2,y2,color){
       
@@ -149,6 +172,8 @@ export default {
     drawCanvas(e){
       if (this.currentSelectedObject == 'rectangle'){
         this.drawRectangle(e.offsetX, e.offsetY, 200, 150, this.hexToRGB(this.currentColor))
+      }if (this.currentSelectedObject == 'square'){
+        this.drawSquare(e.offsetX, e.offsetY, 200, this.hexToRGB(this.currentColor))
       } else if (this.currentSelectedObject == 'line'){
         this.drawLine(e.offsetX, e.offsetY, e.offsetX+100, e.offsetY, this.hexToRGB(this.currentColor))
       } else if (this.currentSelectedObject == 'select'){
