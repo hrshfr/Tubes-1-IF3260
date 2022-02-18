@@ -9,6 +9,7 @@
         <input type="color" id="color-picker" @change="(e)=>{this.currentColor = e.target.value}">
         <button class="button" @click="saveFile">Save</button>
         <input id="load" class="button" type="file" accept=".json" @input="(e)=>loadFile()">
+        <button class="button" @click="clear">Clear</button>
       </div>
       <canvas width="800" height="550" @click="(e)=>drawCanvas(e)"></canvas>
     </div>
@@ -77,6 +78,11 @@ export default {
   },
 
   methods:{
+    clear(){
+      this.allObjects = [];
+      this.gl.clearColor(0, 0, 0, 0);
+      this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    },
     createShader(gl, type, source){
       const shader = gl.createShader(type);
       gl.shaderSource(shader, source);
