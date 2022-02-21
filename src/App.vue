@@ -2,9 +2,9 @@
   <div id="app">
     <div id="container-canvas-button">
       <div id="container-button">
-        <button @click="(e)=>{this.currentSelectedObject='rectangle'}" class="button">Rectangle</button>
-        <button @click="(e)=>{this.currentSelectedObject='line'}" class="button">Line</button>
-        <button @click="(e)=>{this.currentSelectedObject='select'}" class="button">Select</button>
+        <button @click="()=>this.currentSelectedObject='rectangle'" class="button">Rectangle</button>
+        <button @click="()=>this.currentSelectedObject='line'" class="button">Line</button>
+        <button @click="()=>this.currentSelectedObject='select'" class="button">Select</button>
         <input type="color" id="color-picker" @change="(e)=>{this.currentColor = e.target.value}">
         <button class="button" @click="saveFile">Save</button>
         <input id="load" class="button" type="file" accept=".json" @input="(e)=>loadFile()">
