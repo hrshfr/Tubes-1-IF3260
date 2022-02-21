@@ -11,7 +11,17 @@
         <input id="load" class="button" type="file" accept=".json" @input="(e)=>loadFile()">
         <button class="button" @click="clear">Clear</button>
       </div>
-      <canvas width="800" height="550" @click="(e)=>drawCanvas(e)"></canvas>
+      <canvas width="800" height="550" @click="(e)=>clickResponse(e)"></canvas>
+    </div>
+    <div id="container-slider">
+      <label for="tx">Translation X</label>
+      <input id="tx" class="slider" type="range" min="0" max="800" value="0" oninput="txoutput.value = tx.value" @input="e => this.updatePositionX(e)" />
+      <output id="txoutput">0</output>
+    </div>
+    <div id="container-slider">
+      <label for="ty">Translation Y</label>
+      <input id="ty" class="slider" type="range" min="0" max="550" value="0" oninput="tyoutput.value = ty.value" @input="e => this.updatePositionY(e)" />
+      <output id="tyoutput">0</output>
     </div>
   </div>
 </template>
@@ -110,11 +120,11 @@ export default {
       gl.deleteProgram(program);      
     },
 
-    drawRectangle(x,y,width,height,color){
-      var x1 = x;
-      var x2 = x + width;
-      var y1 = y;
-      var y2 = y + height;
+    drawRectangle(rect){
+      var x1 = rect.x;
+      var x2 = rect.x + rect.width;
+      var y1 = rect.y;
+      var y2 = rect.y + rect.height;
 
       const vertexData = [
         x1, y1,
@@ -126,17 +136,17 @@ export default {
       ]
 
       this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(vertexData), this.gl.STATIC_DRAW);
-
-      this.gl.uniform4f(this.colorUniformLocation, color[0], color[1], color[2], 1);
+      this.gl.uniform4f(this.colorUniformLocation, rect.color[0], rect.color[1], rect.color[2], 1);
       this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-      this.allObjects.unshift({'object':'rectangle','x':x,'y':y,'width':width,'height':height,'color':color})
+
       console.log(this.allObjects)
     },
-    drawSquare(x,y,side,color){
-      var x1 = x;
-      var x2 = x + side;
-      var y1 = y;
-      var y2 = y + side;
+    
+    drawSquare(square){
+      var x1 = square.x;
+      var x2 = square.x + square.width;
+      var y1 = square.y;
+      var y2 = square.y + square.width;
 
       const vertexData = [
         x1, y1,
@@ -148,25 +158,23 @@ export default {
       ]
 
       this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(vertexData), this.gl.STATIC_DRAW);
-
-      this.gl.uniform4f(this.colorUniformLocation, color[0], color[1], color[2], 1);
+      this.gl.uniform4f(this.colorUniformLocation, square.color[0], square.color[1], square.color[2], 1);
       this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-      this.allObjects.unshift({'object':'square','x':x,'y':y,'width':side,'height':side,'color':color})
+      
       console.log(this.allObjects)
     },
 
-    drawLine(x1,y1,x2,y2,color){
+    drawLine(line){
       
       const vertexData = [
-        x1, y1,
-        x2, y2,        
+        line.v[0][0], line.v[0][1],
+        line.v[1][0], line.v[1][1],
       ]
 
       this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(vertexData), this.gl.STATIC_DRAW);
-
-      this.gl.uniform4f(this.colorUniformLocation, color[0], color[1], color[2], 1);
+      this.gl.uniform4f(this.colorUniformLocation, line.color[0], line.color[1], line.color[2], 1);
       this.gl.drawArrays(this.gl.LINES, 0, 2);
-      this.allObjects.unshift({'object':'line','v':[[x1,y1],[x2,y2]],'color':color})
+
       console.log(this.allObjects)
     },
 
@@ -175,23 +183,30 @@ export default {
       return result ? [parseInt(result[1], 16)/255,parseInt(result[2], 16)/255,parseInt(result[3], 16)/255] : null;
     },
 
-    drawCanvas(e){
+    clickResponse(e){
       if (this.currentSelectedObject == 'rectangle'){
-        this.drawRectangle(e.offsetX, e.offsetY, 200, 150, this.hexToRGB(this.currentColor))
-      }if (this.currentSelectedObject == 'square'){
-        this.drawSquare(e.offsetX, e.offsetY, 200, this.hexToRGB(this.currentColor))
+        this.allObjects.unshift({'object':'rectangle','x':e.offsetX,'y':e.offsetY,'width':200,'height':150,'color':this.hexToRGB(this.currentColor)});
+        this.drawRectangle(this.allObjects[0]);
+
+      } else if (this.currentSelectedObject == 'square'){
+        this.allObjects.unshift({'object':'square','x':e.offsetX,'y':e.offsetY,'width':200,'height':200,'color':this.hexToRGB(this.currentColor)});
+        this.drawSquare(this.allObjects[0]);
+
       } else if (this.currentSelectedObject == 'line'){
-        this.drawLine(e.offsetX, e.offsetY, e.offsetX+100, e.offsetY, this.hexToRGB(this.currentColor))
+        this.allObjects.unshift({'object':'line','v':[[e.offsetX,e.offsetY],[e.offsetX+200,e.offsetY]],'color':this.hexToRGB(this.currentColor)});
+        this.drawLine(this.allObjects[0]);
+
       } else if (this.currentSelectedObject == 'select'){
         this.selectObject(e);
+
       }
+
     },
 
     vertexPicking(e, objIdx) {
       
       if (objIdx == null){
-        console.log([null, null]);
-        return [null, null];
+        this.currentClickedPos = [null, null];
       }
 
       let nearestIdx = null;
@@ -221,7 +236,7 @@ export default {
         
         for (let i = 0; i < vertices.length; i++) {
           let v = euclideanDistance(e.offsetX, e.offsetY, vertices[i][0], vertices[i][1]);
-          console.log(v);
+
           if (v < minDist) {
             minDist = v;
             nearestIdx = i;
@@ -235,7 +250,7 @@ export default {
       
       // output
       console.log([nearestIdx, objIdx]);
-      return [nearestIdx, objIdx];
+      this.currentClickedPos = [nearestIdx, objIdx];
 
     },
 
@@ -274,8 +289,76 @@ export default {
 
       if (objIdx != null) {
         this.vertexPicking(e, objIdx);
+
+        let obj = this.allObjects[objIdx];
+        
+        if (obj.object == 'line') {
+          document.getElementById('tx').setAttribute("value", obj.v[0][0]);
+          document.getElementById('txoutput').innerHTML = obj.v[0][0];
+          document.getElementById('ty').setAttribute("value", obj.v[0][1]);
+          document.getElementById('tyoutput').innerHTML = obj.v[0][1];
+
+        } else if (obj.object == 'rectangle' || obj.object == 'square') {
+          document.getElementById('tx').setAttribute("value", obj.x);
+          document.getElementById('txoutput').innerHTML = obj.x;
+          document.getElementById('ty').setAttribute("value", obj.y);
+          document.getElementById('tyoutput').innerHTML = obj.y;
+
+        } else if (obj.object == 'polygon') {
+          //polygon
+        }
+
       }
       //return objIdx;
+    },
+
+    updatePositionX(e){
+      let obj = this.allObjects[this.currentClickedPos[1]];
+
+      if (obj.object == 'line') {
+        let diff = obj.v[1][0] - obj.v[0][0];
+        
+        obj.v[0][0] = parseFloat(e.target.value);
+        obj.v[1][0] = parseFloat(e.target.value) + diff;
+
+      } else if (obj.object == 'square' || obj.object == 'rectangle') {
+        obj.x = parseFloat(e.target.value);
+      }
+
+      this.drawScene();
+    },
+
+    updatePositionY(e){
+      let obj = this.allObjects[this.currentClickedPos[1]];
+
+      if (obj.object == 'line') {
+        let diff = obj.v[1][1] - obj.v[0][1];
+        
+        obj.v[0][1] = parseFloat(e.target.value);
+        obj.v[1][1] = parseFloat(e.target.value) + diff;
+
+      } else if (obj.object == 'square' || obj.object == 'rectangle') {
+        obj.y = parseFloat(e.target.value);
+      }
+
+      this.drawScene();
+    },
+
+    drawScene(){
+      this.gl.clearColor(0, 0, 0, 0);
+      this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+
+      for (let i = this.allObjects.length - 1; i >= 0; i--) {
+        if (this.allObjects[i].object == 'rectangle') {
+          this.drawRectangle(this.allObjects[i]);
+        } else if (this.allObjects[i].object == 'square') {
+          this.drawSquare(this.allObjects[i]);
+        } else if (this.allObjects[i].object == 'line') {
+          this.drawLine(this.allObjects[i]);
+        } else if (this.allObjects[i].object == 'polygon') {
+          // polygon
+        }
+      }
     },
 
     saveFile(){
