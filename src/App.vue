@@ -1,20 +1,45 @@
 <template>
   <div id="app">
-    <div id="container-canvas-button">
+    <canvas width="900" @click="(e)=>drawCanvas(e)"></canvas>
+    <div id="container-menu">
+      <span> Files</span>
+      <div style="display:flex;gap:0.5rem;margin-top:0.3rem">
+        <button @click="saveFile">Save</button>
+        <input id="load" type="file" accept=".json" @input="(e)=>loadFile()">
+      </div>
+      
+      <span style="margin-top:1rem">Clear Screen:</span>
+      <button style="margin-top:0.3rem;width:fit-content" @click="clear">Clear</button>
+
+      <span style="margin-top:1rem">Action:</span>
+      <select name="actions" id="actions" style="margin-top:0.3rem" @change="(e)=>{this.currentSelectedObject=e.target.options[e.target.options.selectedIndex].value}"> 
+        <option value="select">Select Object</option>
+        <option value="line">Line</option>
+        <option value="square">Square</option>
+        <option value="rectangle">Rectangle</option>
+      </select>
+
+      <span style="margin-top:1rem">Color:</span>
+      <input type="color" id="color-picker" style="margin-top:0.3rem" @change="(e)=>{this.currentColor = e.target.value}">
+    </div>
+    <!-- <div id="container-canvas-button">
       <div id="container-button">
-        <button @click="()=>this.currentSelectedObject='rectangle'" class="button">Rectangle</button>
-        <button @click="()=>this.currentSelectedObject='line'" class="button">Line</button>
-        <button @click="()=>this.currentSelectedObject='select'" class="button">Select</button>
+        <button @click="(e)=>{this.currentSelectedObject='rectangle'}" class="button">Rectangle</button>
+        <button @click="(e)=>{this.currentSelectedObject='square'}" class="button">Square</button>
+        <button @click="(e)=>{this.currentSelectedObject='line'}" class="button">Line</button>
+        <button @click="(e)=>{this.currentSelectedObject='select'}" class="button">Select</button>
         <input type="color" id="color-picker" @change="(e)=>{this.currentColor = e.target.value}">
         <button class="button" @click="saveFile">Save</button>
         <input id="load" class="button" type="file" accept=".json" @input="(e)=>loadFile()">
+        <button class="button" @click="clear">Clear</button>
       </div>
       <canvas width="800" height="550" @click="(e)=>drawCanvas(e)"></canvas>
-    </div>
+    </div> -->
   </div>
 </template>
 
 <script>
+import { isInside, euclideanDistance } from './utils.js';
 
 export default {
   name: 'App',
@@ -52,6 +77,8 @@ export default {
     const canvas = document.querySelector('canvas');
     this.gl = canvas.getContext('webgl', {preserveDrawingBuffer: true});
 
+    canvas.height = window.innerHeight
+
     if (!this.gl) {
       throw new Error('WebGL not supported');
     }
@@ -75,6 +102,11 @@ export default {
   },
 
   methods:{
+    clear(){
+      this.allObjects = [];
+      this.gl.clearColor(0, 0, 0, 0);
+      this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    },
     createShader(gl, type, source){
       const shader = gl.createShader(type);
       gl.shaderSource(shader, source);
@@ -124,6 +156,28 @@ export default {
       this.allObjects.unshift({'object':'rectangle','x':x,'y':y,'width':width,'height':height,'color':color})
       console.log(this.allObjects)
     },
+    drawSquare(x,y,side,color){
+      var x1 = x;
+      var x2 = x + side;
+      var y1 = y;
+      var y2 = y + side;
+
+      const vertexData = [
+        x1, y1,
+        x2, y1,
+        x1, y2,
+        x1, y2,
+        x2, y1,
+        x2, y2,        
+      ]
+
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(vertexData), this.gl.STATIC_DRAW);
+
+      this.gl.uniform4f(this.colorUniformLocation, color[0], color[1], color[2], 1);
+      this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+      this.allObjects.unshift({'object':'square','x':x,'y':y,'width':side,'height':side,'color':color})
+      console.log(this.allObjects)
+    },
 
     drawLine(x1,y1,x2,y2,color){
       
@@ -136,7 +190,7 @@ export default {
 
       this.gl.uniform4f(this.colorUniformLocation, color[0], color[1], color[2], 1);
       this.gl.drawArrays(this.gl.LINES, 0, 2);
-      this.allObjects.unshift({'object':'line','x1':x1,'y1':y1,'x2':x2,'y2':y2,'color':color})
+      this.allObjects.unshift({'object':'line','v':[[x1,y1],[x2,y2]],'color':color})
       console.log(this.allObjects)
     },
 
@@ -148,48 +202,104 @@ export default {
     drawCanvas(e){
       if (this.currentSelectedObject == 'rectangle'){
         this.drawRectangle(e.offsetX, e.offsetY, 200, 150, this.hexToRGB(this.currentColor))
+      }if (this.currentSelectedObject == 'square'){
+        this.drawSquare(e.offsetX, e.offsetY, 200, this.hexToRGB(this.currentColor))
       } else if (this.currentSelectedObject == 'line'){
         this.drawLine(e.offsetX, e.offsetY, e.offsetX+100, e.offsetY, this.hexToRGB(this.currentColor))
       } else if (this.currentSelectedObject == 'select'){
-        this.vertexPicking(e);
+        this.selectObject(e);
       }
     },
 
-    vertexPicking(e) {
-      let nearestIdx = -999;
-      let nearestObj = -999;
-      for (let i = 0; i < this.allObjects.length; i++) {
-        let minDist = 100;
-        if (this.allObjects[i].object == 'line') {
-          const line = this.allObjects[i];
-          let v1 = this.euclideanDistance(e.offsetX, e.offsetY, line.x1, line.y1);
-          let v2 = this.euclideanDistance(e.offsetX, e.offsetY, line.x2, line.y2);
-          if (v1 < minDist) {
-            minDist = v1;
-            nearestIdx = 1;
-          }
-          if (v2 < minDist) {
-            minDist = v2;
-            nearestIdx = 2;
-          }
-        }
-        if (minDist <= 10){
-          nearestObj = i;
-          break;
-        }
-      }
-      if ((nearestIdx == -999) || (nearestObj == -999)){
+    vertexPicking(e, objIdx) {
+      
+      if (objIdx == null){
         console.log([null, null]);
         return [null, null];
       }
-      else {
-        console.log([nearestIdx, nearestObj]);
-        return [nearestIdx, nearestObj];
+
+      let nearestIdx = null;
+      let minDist = 10;
+
+      // line
+      if (this.allObjects[objIdx].object == 'line') {
+        const line = this.allObjects[objIdx];
+        let v1 = euclideanDistance(e.offsetX, e.offsetY, line.v[0][0], line.v[0][1]);
+        let v2 = euclideanDistance(e.offsetX, e.offsetY, line.v[1][0], line.v[1][1]);
+
+        if (v1 < minDist) {
+          minDist = v1;
+          nearestIdx = 0;
+        }
+        if (v2 < minDist) {
+          minDist = v2;
+          nearestIdx = 1;
+        }
+
       }
+
+      // square and rectangle
+      else if (this.allObjects[objIdx].object == 'square' || this.allObjects[objIdx].object == 'rectangle') {
+        const rect = this.allObjects[objIdx];
+        let vertices = [[rect.x, rect.y], [rect.x + rect.width, rect.y], [rect.x + rect.width, rect.y + rect.height], [rect.x, rect.y + rect.height]]
+        
+        for (let i = 0; i < vertices.length; i++) {
+          let v = euclideanDistance(e.offsetX, e.offsetY, vertices[i][0], vertices[i][1]);
+          console.log(v);
+          if (v < minDist) {
+            minDist = v;
+            nearestIdx = i;
+          }
+        }
+      }
+
+      else if (this.allObjects[objIdx].object == 'polygon') {
+        // polygon
+      }
+      
+      // output
+      console.log([nearestIdx, objIdx]);
+      return [nearestIdx, objIdx];
+
     },
 
-    euclideanDistance(x1, y1, x2, y2) {
-      return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    selectObject(e) {
+      let objIdx = null;
+
+      for (let i = 0; i < this.allObjects.length; i++) {
+        // line
+        if (this.allObjects[i].object == 'line') {
+          const line = this.allObjects[i];
+          let eq = Math.abs((e.offsetY - line.v[0][1]) * (line.v[1][0] - line.v[0][0]) - (e.offsetX - line.v[0][0]) * (line.v[1][1] - line.v[0][1]))
+          
+          if (eq < 500) {
+            objIdx = i;
+          }
+
+        }
+
+        // rectangle and square
+        else if (this.allObjects[i].object == 'rectangle' || this.allObjects[i].object == 'square') {
+          const rect = this.allObjects[i];
+          let vertices = [[rect.x, rect.y], [rect.x + rect.width, rect.y], [rect.x + rect.width, rect.y + rect.height], [rect.x, rect.y + rect.height]]
+          let mousePos = [e.offsetX, e.offsetY]
+
+          if (isInside(vertices, mousePos)) {
+            objIdx = i;
+          }
+
+        }
+
+        else if (this.allObjects[i].object == 'polygon') {
+          // polygon
+        }
+
+      }
+
+      if (objIdx != null) {
+        this.vertexPicking(e, objIdx);
+      }
+      //return objIdx;
     },
 
     saveFile(){
@@ -234,14 +344,26 @@ export default {
 
 <style>
 
+#app{
+  display: flex;
+}
+
+#container-menu{
+  width: 100%;
+  display: flex;
+  flex-flow: column;
+  justify-content: center;
+  padding: 0 2rem 0 2rem;
+}
+
 body{
-  margin:2rem 0 0 2rem;
+  margin:0 0 0 0;
+  overflow:hidden;
 }
 canvas{
-  width: 800px;
-  height: 550px;
+  width: 900px;
+  height: 100%;
   background-color: black;
-  margin-top:1rem;
 }
 
 #container-canvas-button{
@@ -254,9 +376,4 @@ canvas{
   gap: 0.5rem;
 }
 
-.button{
-  width: fit-content;
-  padding:5px 10px 5px 10px;
-  font-size:1rem;
-}
 </style>
