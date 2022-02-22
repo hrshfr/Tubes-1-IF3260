@@ -12,15 +12,19 @@
       <button style="margin-top:0.3rem;width:fit-content" @click="clear">Clear</button>
 
       <span style="margin-top:1rem">Action:</span>
-      <select name="actions" id="actions" style="margin-top:0.3rem" @change="(e)=>{this.currentSelectedObject=e.target.options[e.target.options.selectedIndex].value}"> 
-        <option value="select">Select Object</option>
-        <option value="line">Line</option>
-        <option value="square">Square</option>
-        <option value="rectangle">Rectangle</option>
-      </select>
+      <div style="display:flex;gap:0.5rem;margin-top:0.3rem">
+        <select name="actions" id="actions" style="width:10rem" @change="(e)=>{this.currentSelectedObject=e.target.options[e.target.options.selectedIndex].value}"> 
+          <option value="select">Select Object</option>
+          <option value="line">Line</option>
+          <option value="square">Square</option>
+          <option value="rectangle">Rectangle</option>
+          <option value="polygon">Polygon</option>
+        </select>
+        <button v-if="currentSelectedObject=='polygon'" @click="stopDrawingPolygon()">Stop Drawing Polygon</button>
+      </div>
 
       <span style="margin-top:1rem">Color:</span>
-      <input type="color" id="color-picker" style="margin-top:0.3rem" @change="(e)=>{this.currentColor = e.target.value}">
+      <input type="color" id="color-picker" style="margin-top:0.3rem" @input="e => handleColor(e)">
 
       <div id="container-slider" style="margin-top:1rem">
         <label for="tx">Translation X</label>
@@ -31,6 +35,11 @@
         <label for="ty">Translation Y</label>
         <input id="ty" class="slider" type="range" min="0" value="0" oninput="tyoutput.value = ty.value" @input="e => this.updatePositionY(e)" />
         <output id="tyoutput">0</output>
+      </div>
+      <div id="container-slider" style="margin-top:1rem">
+        <label for="sqlen">Square length</label>
+        <input id="sqlen" class="slider" type="range" min="0" max="900" value="0" oninput="sqlenoutput.value = sqlen.value" @input="e => this.updateSquareLength(e)" />
+        <output id="sqlenoutput">0</output>
       </div>
 
     </div>
@@ -69,7 +78,8 @@ export default {
     currentColor:[],
     currentClickedPos:[],
     currentSelectedObject:'',
-    allObjects:[]
+    allObjects:[],
+    currPolygonVertex:[]
   }),
 
   mounted(){
@@ -107,6 +117,7 @@ export default {
       this.gl.clearColor(0, 0, 0, 0);
       this.gl.clear(this.gl.COLOR_BUFFER_BIT);
     },
+
     createShader(gl, type, source){
       const shader = gl.createShader(type);
       gl.shaderSource(shader, source);
@@ -149,8 +160,9 @@ export default {
         x2, y2,        
       ]
 
+      let color = this.hexToRGB(rect.color)
       this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(vertexData), this.gl.STATIC_DRAW);
-      this.gl.uniform4f(this.colorUniformLocation, rect.color[0], rect.color[1], rect.color[2], 1);
+      this.gl.uniform4f(this.colorUniformLocation, color[0], color[1], color[2], 1);
       this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 
       console.log(this.allObjects)
@@ -171,8 +183,9 @@ export default {
         x2, y2,        
       ]
 
+      let color = this.hexToRGB(square.color)
       this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(vertexData), this.gl.STATIC_DRAW);
-      this.gl.uniform4f(this.colorUniformLocation, square.color[0], square.color[1], square.color[2], 1);
+      this.gl.uniform4f(this.colorUniformLocation, color[0], color[1], color[2], 1);
       this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
       
       console.log(this.allObjects)
@@ -185,8 +198,9 @@ export default {
         line.v[1][0], line.v[1][1],
       ]
 
+      let color = this.hexToRGB(line.color)
       this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(vertexData), this.gl.STATIC_DRAW);
-      this.gl.uniform4f(this.colorUniformLocation, line.color[0], line.color[1], line.color[2], 1);
+      this.gl.uniform4f(this.colorUniformLocation, color[0], color[1], color[2], 1);
       this.gl.drawArrays(this.gl.LINES, 0, 2);
 
       console.log(this.allObjects)
@@ -197,24 +211,57 @@ export default {
       return result ? [parseInt(result[1], 16)/255,parseInt(result[2], 16)/255,parseInt(result[3], 16)/255] : null;
     },
 
+    handleColor(e){
+      this.currentColor = e.target.value
+
+      if (this.currentClickedPos != []){
+        this.allObjects[this.currentClickedPos[1]].color = e.target.value
+        this.drawScene()
+      }
+    },
+
     clickResponse(e){
       if (this.currentSelectedObject == 'rectangle'){
-        this.allObjects.unshift({'object':'rectangle','x':e.offsetX,'y':e.offsetY,'width':200,'height':150,'color':this.hexToRGB(this.currentColor)});
+        this.allObjects.unshift({'object':'rectangle','x':e.offsetX,'y':e.offsetY,'width':200,'height':150,'color':this.currentColor});
         this.drawRectangle(this.allObjects[0]);
 
       } else if (this.currentSelectedObject == 'square'){
-        this.allObjects.unshift({'object':'square','x':e.offsetX,'y':e.offsetY,'width':200,'height':200,'color':this.hexToRGB(this.currentColor)});
+        this.allObjects.unshift({'object':'square','x':e.offsetX,'y':e.offsetY,'width':200,'height':200,'color':this.currentColor});
         this.drawSquare(this.allObjects[0]);
 
       } else if (this.currentSelectedObject == 'line'){
-        this.allObjects.unshift({'object':'line','v':[[e.offsetX,e.offsetY],[e.offsetX+200,e.offsetY]],'color':this.hexToRGB(this.currentColor)});
+        this.allObjects.unshift({'object':'line','v':[[e.offsetX,e.offsetY],[e.offsetX+200,e.offsetY]],'color':this.currentColor});
         this.drawLine(this.allObjects[0]);
 
       } else if (this.currentSelectedObject == 'select'){
         this.selectObject(e);
 
+      } else if (this.currentSelectedObject == 'polygon'){
+        if (this.currPolygonVertex.length < 6){
+          this.currPolygonVertex.push(e.offsetX, e.offsetY)
+        }else{
+          this.currPolygonVertex.push(
+            this.currPolygonVertex[0],this.currPolygonVertex[1],
+            this.currPolygonVertex[this.currPolygonVertex.length-2],this.currPolygonVertex[this.currPolygonVertex.length-1],
+            e.offsetX, e.offsetY
+          )
+        }
+        if (this.currPolygonVertex.length >= 6){
+          this.drawPolygon(this.currPolygonVertex, this.currentColor)
+        }
       }
+    },
 
+    drawPolygon(vertexData, colorHex){
+      let color = this.hexToRGB(colorHex)
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(vertexData), this.gl.STATIC_DRAW);
+      this.gl.uniform4f(this.colorUniformLocation, color[0], color[1], color[2], 1);
+      this.gl.drawArrays(this.gl.TRIANGLES, 0, vertexData.length/2);
+    },
+
+    stopDrawingPolygon(){
+      this.allObjects.unshift({'object':'polygon','vertex':this.currPolygonVertex,'color':this.currentColor});
+      this.currPolygonVertex = []
     },
 
     vertexPicking(e, objIdx) {
@@ -296,7 +343,22 @@ export default {
         }
 
         else if (this.allObjects[i].object == 'polygon') {
-          // polygon
+          let mousePos = [e.offsetX, e.offsetY]
+          let vertices = [
+            [this.allObjects[i].vertex[0],this.allObjects[i].vertex[1]],
+            [this.allObjects[i].vertex[2],this.allObjects[i].vertex[3]],
+            [this.allObjects[i].vertex[4],this.allObjects[i].vertex[5]]
+          ]
+
+          for(let j=10;j<this.allObjects[i].vertex.length;j+=6){
+            vertices.push([this.allObjects[i].vertex[j],this.allObjects[i].vertex[j+1]])
+          }
+
+          if (isInside(vertices, mousePos)) {
+            objIdx = i;
+          }
+          console.log(this.allObjects[i].vertex)
+          console.log(vertices)
         }
 
       }
@@ -305,57 +367,98 @@ export default {
         this.vertexPicking(e, objIdx);
 
         let obj = this.allObjects[objIdx];
-        
+        document.getElementById('color-picker').value = obj.color
+
         if (obj.object == 'line') {
-          document.getElementById('tx').setAttribute("value", obj.v[0][0]);
+          document.getElementById('tx').value = obj.v[0][0]
           document.getElementById('txoutput').innerHTML = obj.v[0][0];
-          document.getElementById('ty').setAttribute("value", obj.v[0][1]);
+          document.getElementById('ty').value = obj.v[0][1]
           document.getElementById('tyoutput').innerHTML = obj.v[0][1];
 
         } else if (obj.object == 'rectangle' || obj.object == 'square') {
-          document.getElementById('tx').setAttribute("value", obj.x);
+          if (obj.object == 'square'){
+            document.getElementById('sqlen').value = obj.width;
+            document.getElementById('sqlenoutput').innerHTML = obj.width;
+          }
+          document.getElementById('tx').value = obj.x
           document.getElementById('txoutput').innerHTML = obj.x;
-          document.getElementById('ty').setAttribute("value", obj.y);
+          document.getElementById('ty').value = obj.y;
           document.getElementById('tyoutput').innerHTML = obj.y;
-
         } else if (obj.object == 'polygon') {
-          //polygon
+          document.getElementById('tx').value = obj.vertex[0]
+          document.getElementById('txoutput').innerHTML = obj.vertex[0];
+          document.getElementById('ty').value = obj.vertex[1];
+          document.getElementById('tyoutput').innerHTML = obj.vertex[1];
         }
-
+      } else{
+        this.currentClickedPos = []
+        document.getElementById('tx').value = 0
+        document.getElementById('txoutput').innerHTML = 0;
+        document.getElementById('ty').value = 0
+        document.getElementById('tyoutput').innerHTML = 0;
+        document.getElementById('sqlen').value = 0;
+        document.getElementById('sqlenoutput').innerHTML = 0;
+        document.getElementById('color-picker').value = '#000000';
       }
       //return objIdx;
     },
 
     updatePositionX(e){
-      let obj = this.allObjects[this.currentClickedPos[1]];
-
-      if (obj.object == 'line') {
-        let diff = obj.v[1][0] - obj.v[0][0];
-        
-        obj.v[0][0] = parseFloat(e.target.value);
-        obj.v[1][0] = parseFloat(e.target.value) + diff;
-
-      } else if (obj.object == 'square' || obj.object == 'rectangle') {
-        obj.x = parseFloat(e.target.value);
+      if (this.currentClickedPos != []) {
+        let obj = this.allObjects[this.currentClickedPos[1]];
+        if (obj.object == 'line') {
+          let diff = obj.v[1][0] - obj.v[0][0];
+          obj.v[0][0] = parseFloat(e.target.value);
+          obj.v[1][0] = parseFloat(e.target.value) + diff;
+        }
+        else if (obj.object == 'square' || obj.object == 'rectangle') {
+          obj.x = parseFloat(e.target.value);
+        } else if (obj.object == 'polygon'){
+          let ref = obj.vertex[0]
+          for(let i=0;i<obj.vertex.length;i++){
+            if(i%2==0){
+              obj.vertex[i] = obj.vertex[i] + (e.target.value - ref)
+            }
+          }
+        }
+        this.drawScene();
       }
-
-      this.drawScene();
+      
     },
 
     updatePositionY(e){
-      let obj = this.allObjects[this.currentClickedPos[1]];
+      if (this.currentClickedPos != []) {
+        let obj = this.allObjects[this.currentClickedPos[1]];
+        if (obj.object == 'line') {
+          let diff = obj.v[1][1] - obj.v[0][1];
+          
+          obj.v[0][1] = parseFloat(e.target.value);
+          obj.v[1][1] = parseFloat(e.target.value) + diff;
 
-      if (obj.object == 'line') {
-        let diff = obj.v[1][1] - obj.v[0][1];
-        
-        obj.v[0][1] = parseFloat(e.target.value);
-        obj.v[1][1] = parseFloat(e.target.value) + diff;
+        } else if (obj.object == 'square' || obj.object == 'rectangle') {
+          obj.y = parseFloat(e.target.value);
+        } else if (obj.object == 'polygon'){
+          let ref = obj.vertex[1]
+          for(let i=0;i<obj.vertex.length;i++){
+            if(i%2==1){
+              obj.vertex[i] = obj.vertex[i] + (e.target.value - ref)
+            }
+          }
+        }
 
-      } else if (obj.object == 'square' || obj.object == 'rectangle') {
-        obj.y = parseFloat(e.target.value);
+        this.drawScene();
       }
+    },
 
-      this.drawScene();
+    updateSquareLength(e){
+      if (this.currentClickedPos != []) {
+        let obj = this.allObjects[this.currentClickedPos[1]];
+
+        if (obj.object == 'square') {
+          obj.width = parseFloat(e.target.value);
+          this.drawScene();
+        } 
+      }
     },
 
     drawScene(){
@@ -370,7 +473,7 @@ export default {
         } else if (this.allObjects[i].object == 'line') {
           this.drawLine(this.allObjects[i]);
         } else if (this.allObjects[i].object == 'polygon') {
-          // polygon
+          this.drawPolygon(this.allObjects[i].vertex, this.allObjects[i].color)
         }
       }
     },
@@ -398,15 +501,10 @@ export default {
         reader.readAsText(file, "UTF-8");
         
         reader.onload = (e) => {
-          const data = JSON.parse(e.target.result);
-
-          for (let i=0;i<data.length;i++){
-            console.log(data[i])
-            if (data[i]['object']=='rectangle'){
-              this.drawRectangle(data[i]['x'],data[i]['y'],data[i]['width'],data[i]['height'], data[i]['color'])
-            }
-          }
-
+          this.clear()
+          this.allObjects = JSON.parse(e.target.result);
+          // console.log(this.allObjects)
+          this.drawScene()
         }
       }
     }
