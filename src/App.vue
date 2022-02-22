@@ -37,11 +37,10 @@
         <output id="tyoutput">0</output>
       </div>
       <div id="container-slider" style="margin-top:1rem">
-        <label for="sqlen">Square length</label>
-        <input id="sqlen" class="slider" type="range" min="0" max="900" value="0" oninput="sqlenoutput.value = sqlen.value" @input="e => this.updateSquareLength(e)" />
-        <output id="sqlenoutput">0</output>
+        <label for="lenOrSide">Length/Side</label>
+        <input id="lenOrSide" class="slider" type="range" min="0" max="900" value="0" oninput="lenOrSideOutput.value = lenOrSide.value" @input="e => this.updateLength(e)" />
+        <output id="lenOrSideOutput">0</output>
       </div>
-
     </div>
   </div>
 </template>
@@ -370,16 +369,16 @@ export default {
         document.getElementById('color-picker').value = obj.color
 
         if (obj.object == 'line') {
+          document.getElementById('lenOrSide').value = obj.v[1][0] - obj.v[0][0];
+          document.getElementById('lenOrSideOutput').innerHTML = obj.v[1][0] - obj.v[0][0];
           document.getElementById('tx').value = obj.v[0][0]
           document.getElementById('txoutput').innerHTML = obj.v[0][0];
           document.getElementById('ty').value = obj.v[0][1]
           document.getElementById('tyoutput').innerHTML = obj.v[0][1];
 
         } else if (obj.object == 'rectangle' || obj.object == 'square') {
-          if (obj.object == 'square'){
-            document.getElementById('sqlen').value = obj.width;
-            document.getElementById('sqlenoutput').innerHTML = obj.width;
-          }
+          document.getElementById('lenOrSide').value = obj.width;
+          document.getElementById('lenOrSideOutput').innerHTML = obj.width;
           document.getElementById('tx').value = obj.x
           document.getElementById('txoutput').innerHTML = obj.x;
           document.getElementById('ty').value = obj.y;
@@ -396,8 +395,8 @@ export default {
         document.getElementById('txoutput').innerHTML = 0;
         document.getElementById('ty').value = 0
         document.getElementById('tyoutput').innerHTML = 0;
-        document.getElementById('sqlen').value = 0;
-        document.getElementById('sqlenoutput').innerHTML = 0;
+        document.getElementById('lenOrSide').value = 0;
+        document.getElementById('lenOrSideOutput').innerHTML = 0;
         document.getElementById('color-picker').value = '#000000';
       }
       //return objIdx;
@@ -450,11 +449,19 @@ export default {
       }
     },
 
-    updateSquareLength(e){
+    updateLength(e){
       if (this.currentClickedPos != []) {
         let obj = this.allObjects[this.currentClickedPos[1]];
 
         if (obj.object == 'square') {
+          obj.width = parseFloat(e.target.value);
+          this.drawScene();
+        }
+        if (obj.object == 'line') {
+          obj.width =  obj.v[1][0] =  obj.v[0][0] + parseFloat(e.target.value);
+          this.drawScene();
+        } 
+        if (obj.object == 'rectangle') {
           obj.width = parseFloat(e.target.value);
           this.drawScene();
         } 
