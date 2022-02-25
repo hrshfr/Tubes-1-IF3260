@@ -2,8 +2,8 @@
 	<div id="app">
 		<canvas width="900" @click="(e) => clickResponse(e)"></canvas>
 		<div id="container-menu">
-			<div>
-				<span>{{ info }}</span>
+			<div class="information">
+				<h3>{{ info }}</h3>
 			</div>
 			<span> Files</span>
 			<div style="display: flex; gap: 0.5rem; margin-top: 0.3rem">
@@ -103,7 +103,7 @@
 
 <script>
 /*eslint no-mixed-spaces-and-tabs: ["error", "smart-tabs"]*/
-import { isInside, euclideanDistance } from "./utils.js";
+import { isInside, euclideanDistance, gradient } from "./utils.js";
 
 export default {
 	name: "App",
@@ -198,6 +198,7 @@ export default {
 				this.mouseClicked = true;
 				if (this.currentSelectedObject === "line") {
 					this.allObjects.unshift({
+						id: this.allObjects.length + 1,
 						object: "line",
 						v: [this.startClickedCanvas, [e.offsetX, e.offsetY]],
 						color: this.currentColor,
@@ -205,6 +206,7 @@ export default {
 				}
 				if (this.currentSelectedObject === "square") {
 					this.allObjects.unshift({
+						id: this.allObjects.length + 1,
 						object: "square",
 						x: e.offsetX,
 						y: e.offsetY,
@@ -216,6 +218,7 @@ export default {
 				}
 				if (this.currentSelectedObject === "rectangle") {
 					this.allObjects.unshift({
+						id: this.allObjects.length + 1,
 						object: "rectangle",
 						x: e.offsetX,
 						y: e.offsetY,
@@ -241,6 +244,7 @@ export default {
 					if (this.currentSelectedObject === "line") {
 						this.allObjects.shift();
 						this.allObjects.unshift({
+							id: this.allObjects.length + 1,
 							object: "line",
 							v: [this.startClickedCanvas, [e.offsetX, e.offsetY]],
 							color: this.currentColor,
@@ -250,6 +254,7 @@ export default {
 					if (this.currentSelectedObject === "square") {
 						this.allObjects.shift();
 						this.allObjects.unshift({
+							id: this.allObjects.length + 1,
 							object: "square",
 							x: this.startClickedCanvas[0],
 							y: this.startClickedCanvas[1],
@@ -257,8 +262,8 @@ export default {
 							y1: e.offsetY,
 							color: this.currentColor,
 							side: Math.max(
-								e.offsetX - this.startClickedCanvas[0],
-								e.offsetY - this.startClickedCanvas[1]
+								Math.abs(e.offsetX - this.startClickedCanvas[0]),
+								Math.abs(e.offsetY - this.startClickedCanvas[1])
 							),
 						});
 						this.drawSquare(this.allObjects[0]);
@@ -266,6 +271,7 @@ export default {
 					if (this.currentSelectedObject === "rectangle") {
 						this.allObjects.shift();
 						this.allObjects.unshift({
+							id: this.allObjects.length + 1,
 							object: "rectangle",
 							x: this.startClickedCanvas[0],
 							y: this.startClickedCanvas[1],
@@ -483,6 +489,7 @@ export default {
 
 		stopDrawingPolygon() {
 			this.allObjects.unshift({
+				id: this.allObjects.length + 1,
 				object: "polygon",
 				vertex: this.currPolygonVertex,
 				color: this.currentColor,
@@ -566,27 +573,48 @@ export default {
 				// line
 				if (this.allObjects[i].object == "line") {
 					const line = this.allObjects[i];
-					let eq = Math.abs(
-						(e.offsetY - line.v[0][1]) * (line.v[1][0] - line.v[0][0]) -
-							(e.offsetX - line.v[0][0]) * (line.v[1][1] - line.v[0][1])
-					);
+					// let eq = Math.abs(
+					// 	(e.offsetY - line.v[0][1]) * (line.v[1][0] - line.v[0][0]) -
+					// 		(e.offsetX - line.v[0][0]) * (line.v[1][1] - line.v[0][1])
+					// );
 
-					if (eq < 500) {
+					// if (eq < 500) {
+					// 	objIdx = i;
+					// }
+					let m1 = gradient(
+						line.v[0][0],
+						line.v[0][1],
+						line.v[1][0],
+						line.v[1][1]
+					);
+					let m2 = gradient(line.v[0][0], line.v[0][1], e.offsetX, e.offsetY);
+
+					if (Math.abs(m2 - m1) < 0.05) {
 						objIdx = i;
 					}
 				}
 
 				// rectangle and square
-				else if (
-					this.allObjects[i].object == "rectangle" ||
-					this.allObjects[i].object == "square"
-				) {
+				else if (this.allObjects[i].object == "rectangle") {
 					const rect = this.allObjects[i];
 					let vertices = [
 						[rect.x, rect.y],
 						[rect.x + rect.width, rect.y],
 						[rect.x + rect.width, rect.y + rect.height],
 						[rect.x, rect.y + rect.height],
+					];
+					let mousePos = [e.offsetX, e.offsetY];
+
+					if (isInside(vertices, mousePos)) {
+						objIdx = i;
+					}
+				} else if (this.allObjects[i].object == "square") {
+					const square = this.allObjects[i];
+					let vertices = [
+						[square.x, square.y],
+						[square.x + square.side, square.y],
+						[square.x + square.side, square.y + square.side],
+						[square.x, square.y + square.side],
 					];
 					let mousePos = [e.offsetX, e.offsetY];
 
@@ -756,12 +784,20 @@ export default {
 				let obj = this.allObjects[this.currentClickedPos[1]];
 
 				if (obj.object == "square") {
-					obj.width = parseFloat(e.target.value);
+					obj.side = parseFloat(e.target.value);
 					this.drawScene();
 				}
 				if (obj.object == "rectangle") {
 					obj.width = parseFloat(e.target.value);
 					this.drawScene();
+				}
+				if (obj.object == "line") {
+					// let ratio = parseFloat(e.target.value)/euclideanDistance(obj.v[0][0],obj.v[0][1],obj.v[1][0],obj.v[1][1]);
+					// obj.v[0][0] = ratio*obj.v[0][0]
+					// obj.v[0][1] = ratio*obj.v[0][1]
+					// obj.v[1][0] = ratio*obj.v[1][0]
+					// obj.v[1][1] = ratio*obj.v[1][1]
+					// this.drawScene();
 				}
 			}
 		},
@@ -851,5 +887,12 @@ canvas {
 #container-button {
 	display: flex;
 	gap: 0.5rem;
+}
+.information {
+	display: flex;
+	justify-content: center;
+	margin: 0 2em;
+	border: 2px solid black;
+	border-radius: 8px;
 }
 </style>

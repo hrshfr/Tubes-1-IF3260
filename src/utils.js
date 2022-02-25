@@ -3,6 +3,10 @@ export function euclideanDistance(x1, y1, x2, y2) {
     return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 }
 
+export function gradient(x1, y1, x2, y2) {
+  return (y2-y1)/(x2-x1);
+}
+
 
 export function isInside(vertices, point) {
     if (vertices.length < 3) {
