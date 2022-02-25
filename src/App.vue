@@ -5,6 +5,12 @@
 			<div class="information">
 				<h3>{{ info }}</h3>
 			</div>
+			<button
+				style="margin-top: 0.3rem; width: fit-content"
+				@click="printObject"
+			>
+				Show all object
+			</button>
 			<span> Files</span>
 			<div style="display: flex; gap: 0.5rem; margin-top: 0.3rem">
 				<button @click="saveFile">Save</button>
@@ -87,15 +93,14 @@
 				<label for="lenOrSide">Length/Side</label>
 				<input
 					id="lenOrSide"
+					v-model="lenOrSide"
 					class="slider"
 					type="range"
 					min="0"
-					max="900"
-					value="0"
-					oninput="lenOrSideOutput.value = lenOrSide.value"
+					max="2000"
 					@input="(e) => this.updateLength(e)"
 				/>
-				<output id="lenOrSideOutput">0</output>
+				<output>{{ lenOrSide }}</output>
 			</div>
 		</div>
 	</div>
@@ -134,12 +139,14 @@ export default {
 		currentColor: [],
 		currentClickedPos: [],
 		currentSelectedObject: "",
+		currentSelectedObjectId: "",
 		allObjects: [],
 		currPolygonVertex: [],
 		mouseClicked: false,
 		startClickedCanvas: [],
 		canvas: null,
 		info: "",
+		lenOrSide: 0,
 	}),
 
 	mounted() {
@@ -347,8 +354,6 @@ export default {
 				1
 			);
 			this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-
-			console.log(this.allObjects);
 		},
 
 		drawSquare(square) {
@@ -377,9 +382,9 @@ export default {
 					y2 = square.y + square.side;
 				} else {
 					x1 = square.x;
-					x2 = square.x + square.side;
+					x2 = square.x - square.side;
 					y1 = square.y;
-					y2 = square.y + square.side;
+					y2 = square.y - square.side;
 				}
 			}
 
@@ -399,8 +404,6 @@ export default {
 				1
 			);
 			this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-
-			console.log(this.allObjects);
 		},
 		drawLine(line) {
 			const vertexData = [
@@ -424,8 +427,6 @@ export default {
 				1
 			);
 			this.gl.drawArrays(this.gl.LINES, 0, 2);
-
-			console.log(this.allObjects);
 		},
 
 		hexToRGB(hex) {
@@ -531,11 +532,32 @@ export default {
 				}
 			}
 
-			// square and rectangle
-			else if (
-				this.allObjects[objIdx].object == "square" ||
-				this.allObjects[objIdx].object == "rectangle"
-			) {
+			//  square
+			else if (this.allObjects[objIdx].object == "square") {
+				const rect = this.allObjects[objIdx];
+				let vertices = [
+					[rect.x, rect.y],
+					[rect.x + rect.side, rect.y],
+					[rect.x + rect.side, rect.y + rect.side],
+					[rect.x, rect.y + rect.side],
+				];
+
+				for (let i = 0; i < vertices.length; i++) {
+					let v = euclideanDistance(
+						e.offsetX,
+						e.offsetY,
+						vertices[i][0],
+						vertices[i][1]
+					);
+
+					if (v < minDist) {
+						minDist = v;
+						nearestIdx = i;
+					}
+				}
+			}
+			//  rectangle
+			else if (this.allObjects[objIdx].object == "rectangle") {
 				const rect = this.allObjects[objIdx];
 				let vertices = [
 					[rect.x, rect.y],
@@ -573,14 +595,6 @@ export default {
 				// line
 				if (this.allObjects[i].object == "line") {
 					const line = this.allObjects[i];
-					// let eq = Math.abs(
-					// 	(e.offsetY - line.v[0][1]) * (line.v[1][0] - line.v[0][0]) -
-					// 		(e.offsetX - line.v[0][0]) * (line.v[1][1] - line.v[0][1])
-					// );
-
-					// if (eq < 500) {
-					// 	objIdx = i;
-					// }
 					let m1 = gradient(
 						line.v[0][0],
 						line.v[0][1],
@@ -595,7 +609,50 @@ export default {
 				}
 
 				// rectangle and square
-				else if (this.allObjects[i].object == "rectangle") {
+				if (this.allObjects[i].object === "square") {
+					const square = this.allObjects[i];
+					let vertices = [];
+					if (square.x1 > square.x) {
+						if (square.y1 > square.y) {
+							vertices = [
+								[square.x + square.side, square.y],
+								[square.x, square.y],
+								[square.x, square.y + square.side],
+								[square.x + square.side, square.y + square.side],
+							];
+						} else {
+							vertices = [
+								[square.x + square.side, square.y - square.side],
+								[square.x, square.y - square.side],
+								[square.x, square.y],
+								[square.x + square.side, square.y],
+							];
+						}
+					} else {
+						if (square.y1 > square.y) {
+							vertices = [
+								[square.x - square.side, square.y],
+								[square.x, square.y],
+								[square.x, square.y + square.side],
+								[square.x - square.side, square.y + square.side],
+							];
+						} else {
+							vertices = [
+								[square.x - square.side, square.y],
+								[square.x, square.y],
+								[square.x, square.y - square.side],
+								[square.x - square.side, square.y - square.side],
+							];
+						}
+					}
+
+					let mousePos = [e.offsetX, e.offsetY];
+
+					if (isInside(vertices, mousePos)) {
+						objIdx = i;
+					}
+				}
+				if (this.allObjects[i].object === "rectangle") {
 					const rect = this.allObjects[i];
 					let vertices = [
 						[rect.x, rect.y],
@@ -608,20 +665,9 @@ export default {
 					if (isInside(vertices, mousePos)) {
 						objIdx = i;
 					}
-				} else if (this.allObjects[i].object == "square") {
-					const square = this.allObjects[i];
-					let vertices = [
-						[square.x, square.y],
-						[square.x + square.side, square.y],
-						[square.x + square.side, square.y + square.side],
-						[square.x, square.y + square.side],
-					];
-					let mousePos = [e.offsetX, e.offsetY];
+				}
 
-					if (isInside(vertices, mousePos)) {
-						objIdx = i;
-					}
-				} else if (this.allObjects[i].object == "polygon") {
+				if (this.allObjects[i].object == "polygon") {
 					let mousePos = [e.offsetX, e.offsetY];
 					let vertices = [
 						[this.allObjects[i].vertex[0], this.allObjects[i].vertex[1]],
@@ -651,31 +697,25 @@ export default {
 				document.getElementById("color-picker").value = obj.color;
 
 				if (obj.object == "line") {
-					this.info = "Line selected";
-					console.log(obj);
+					this.info = "Line #" + obj.id + " selected";
+					this.currentSelectedObjectId = obj.id;
 					this.canvas.addEventListener("mousedown", function (e) {
+						let v0distance = euclideanDistance(
+							e.offsetX,
+							e.offsetY,
+							obj.v[0][0],
+							obj.v[0][1]
+						);
 						let v1distance = euclideanDistance(
 							e.offsetX,
 							e.offsetY,
 							obj.v[1][0],
 							obj.v[1][1]
 						);
-						let v2distance = euclideanDistance(
-							e.offsetX,
-							e.offsetY,
-							obj.v[0][0],
-							obj.v[0][1]
-						);
 						this.startClickedCanvas = [e.offsetX, e.offsetY];
 						this.mouseClicked = true;
-						if (Math.max(v1distance, v2distance) === v1distance) {
-							console.log("11111111");
-							obj.v[1] = obj.v[0];
-							obj.v[0] = [e.offsetX, e.offsetY];
-						} else {
-							console.log("22222222222");
+						if (Math.max(v0distance, v1distance) === v1distance) {
 							obj.v[0] = obj.v[1];
-							obj.v[1] = [e.offsetX, e.offsetY];
 						}
 					});
 					this.canvas.addEventListener("mouseup", function () {
@@ -685,51 +725,54 @@ export default {
 						"mousemove",
 						function (e) {
 							if (this.mouseClicked) {
-								obj.v[0] = [e.offsetX, e.offsetY];
+								obj.v[1] = [e.offsetX, e.offsetY];
 								this.drawScene();
 							}
 						}.bind(this),
 						false
 					);
-					// document.getElementById("lenOrSide").value =
-					// 	obj.v[1][0] - obj.v[0][0];
-					// document.getElementById("lenOrSideOutput").innerHTML =
-					// 	obj.v[1][0] - obj.v[0][0];
-					// document.getElementById("tx").value = obj.v[0][0];
-					// document.getElementById("txoutput").innerHTML = obj.v[0][0];
-					// document.getElementById("ty").value = obj.v[0][1];
-					// document.getElementById("tyoutput").innerHTML = obj.v[0][1];
+					this.lenOrSide = euclideanDistance(
+						obj.v[0][0],
+						obj.v[0][1],
+						obj.v[1][0],
+						obj.v[1][1]
+					);
+					document.getElementById("tx").value = obj.v[0][0];
+					document.getElementById("txoutput").innerHTML = obj.v[0][0];
+					document.getElementById("ty").value = obj.v[0][1];
+					document.getElementById("tyoutput").innerHTML = obj.v[0][1];
 				} else if (obj.object == "rectangle") {
-					this.info = "Rectangle selected";
-					document.getElementById("lenOrSide").value = obj.width;
-					document.getElementById("lenOrSideOutput").innerHTML = obj.width;
+					this.info = "Rectangle #" + obj.id + " selected";
+					this.currentSelectedObjectId = obj.id;
+					this.lenOrSide = obj.width;
 					document.getElementById("tx").value = obj.x;
 					document.getElementById("txoutput").innerHTML = obj.x;
 					document.getElementById("ty").value = obj.y;
 					document.getElementById("tyoutput").innerHTML = obj.y;
 				} else if (obj.object == "square") {
-					this.info = "Square selected";
-					document.getElementById("lenOrSide").value = obj.side;
-					document.getElementById("lenOrSideOutput").innerHTML = obj.side;
+					this.info = "Square #" + obj.id + " selected";
+					this.currentSelectedObjectId = obj.id;
+					this.lenOrSide = obj.side;
 					document.getElementById("tx").value = obj.x;
 					document.getElementById("txoutput").innerHTML = obj.x;
 					document.getElementById("ty").value = obj.y;
 					document.getElementById("tyoutput").innerHTML = obj.y;
 				} else if (obj.object == "polygon") {
-					this.info = "Polygon selected";
+					this.info = "Polygon #" + obj.id + " selected";
+					this.currentSelectedObjectId = obj.id;
 					document.getElementById("tx").value = obj.vertex[0];
 					document.getElementById("txoutput").innerHTML = obj.vertex[0];
 					document.getElementById("ty").value = obj.vertex[1];
 					document.getElementById("tyoutput").innerHTML = obj.vertex[1];
 				}
 			} else {
+				this.info = "";
 				this.currentClickedPos = [];
 				document.getElementById("tx").value = 0;
 				document.getElementById("txoutput").innerHTML = 0;
 				document.getElementById("ty").value = 0;
 				document.getElementById("tyoutput").innerHTML = 0;
-				document.getElementById("lenOrSide").value = 0;
-				document.getElementById("lenOrSideOutput").innerHTML = 0;
+				this.lenOrSide = 0;
 				document.getElementById("color-picker").value = "#000000";
 			}
 			//return objIdx;
@@ -780,25 +823,49 @@ export default {
 		},
 
 		updateLength(e) {
-			if (this.currentClickedPos != []) {
-				let obj = this.allObjects[this.currentClickedPos[1]];
+			let obj = this.allObjects.find(
+				(item) => item.id == this.currentSelectedObjectId
+			);
 
-				if (obj.object == "square") {
-					obj.side = parseFloat(e.target.value);
-					this.drawScene();
+			if (obj.object == "square") {
+				obj.side = parseFloat(e.target.value);
+				this.drawScene();
+			}
+			if (obj.object == "rectangle") {
+				obj.width = parseFloat(e.target.value);
+				this.drawScene();
+			}
+			if (obj.object == "line") {
+				let x = Math.sqrt(
+					Math.abs(
+						parseFloat(e.target.value) -
+							Math.pow(Math.abs(obj.v[0][0] - obj.v[1][0]), 2)
+					)
+				);
+				let y = Math.sqrt(
+					Math.abs(
+						parseFloat(e.target.value) -
+							Math.pow(Math.abs(obj.v[0][1] - obj.v[1][1]), 2)
+					)
+				);
+				if (obj.v[1][0] > obj.v[0][0]) {
+					if (obj.v[1][1] > obj.v[0][1]) {
+						obj.v[1][0] = obj.v[0][0] + x;
+						obj.v[1][1] = obj.v[0][1] + y;
+					} else {
+						obj.v[1][0] = obj.v[0][0] + x;
+						obj.v[1][1] = obj.v[0][1] - y;
+					}
+				} else {
+					if (obj.v[1][1] > obj.v[0][1]) {
+						obj.v[1][0] = obj.v[0][0] - x;
+						obj.v[1][1] = obj.v[0][1] + y;
+					} else {
+						obj.v[1][0] = obj.v[0][0] - x;
+						obj.v[1][1] = obj.v[0][1] - y;
+					}
 				}
-				if (obj.object == "rectangle") {
-					obj.width = parseFloat(e.target.value);
-					this.drawScene();
-				}
-				if (obj.object == "line") {
-					// let ratio = parseFloat(e.target.value)/euclideanDistance(obj.v[0][0],obj.v[0][1],obj.v[1][0],obj.v[1][1]);
-					// obj.v[0][0] = ratio*obj.v[0][0]
-					// obj.v[0][1] = ratio*obj.v[0][1]
-					// obj.v[1][0] = ratio*obj.v[1][0]
-					// obj.v[1][1] = ratio*obj.v[1][1]
-					// this.drawScene();
-				}
+				this.drawScene();
 			}
 		},
 
@@ -837,7 +904,9 @@ export default {
 
 			document.body.removeChild(element);
 		},
-
+		printObject() {
+			console.log(this.allObjects);
+		},
 		loadFile() {
 			var file = document.getElementById("load").files[0];
 			if (file) {
