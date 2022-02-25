@@ -2,6 +2,9 @@
 	<div id="app">
 		<canvas width="900" @click="(e) => clickResponse(e)"></canvas>
 		<div id="container-menu">
+			<div>
+				<span>{{ info }}</span>
+			</div>
 			<span> Files</span>
 			<div style="display: flex; gap: 0.5rem; margin-top: 0.3rem">
 				<button @click="saveFile">Save</button>
@@ -18,7 +21,7 @@
 				Clear
 			</button>
 
-			<span style="margin-top: 1rem">Action:</span>
+			<span style="margin-top: 1rem">Action: </span>
 			<div style="display: flex; gap: 0.5rem; margin-top: 0.3rem">
 				<select
 					name="actions"
@@ -135,13 +138,15 @@ export default {
 		currPolygonVertex: [],
 		mouseClicked: false,
 		startClickedCanvas: [],
+		canvas: null,
+		info: "",
 	}),
 
 	mounted() {
-		const canvas = document.querySelector("canvas");
-		this.gl = canvas.getContext("webgl", { preserveDrawingBuffer: true });
+		this.canvas = document.querySelector("canvas");
+		this.gl = this.canvas.getContext("webgl", { preserveDrawingBuffer: true });
 
-		canvas.height = window.innerHeight;
+		this.canvas.height = window.innerHeight;
 		document.getElementById("ty").max = window.innerHeight;
 
 		if (!this.gl) {
@@ -186,7 +191,7 @@ export default {
 			this.gl.canvas.width,
 			this.gl.canvas.height
 		);
-		canvas.addEventListener(
+		this.canvas.addEventListener(
 			"mousedown",
 			function (e) {
 				this.startClickedCanvas = [e.offsetX, e.offsetY];
@@ -222,14 +227,14 @@ export default {
 			}.bind(this),
 			false
 		);
-		canvas.addEventListener(
+		this.canvas.addEventListener(
 			"mouseup",
 			function () {
 				this.mouseClicked = false;
 			}.bind(this),
 			false
 		);
-		canvas.addEventListener(
+		this.canvas.addEventListener(
 			"mousemove",
 			function (e) {
 				if (this.mouseClicked) {
@@ -618,15 +623,56 @@ export default {
 				document.getElementById("color-picker").value = obj.color;
 
 				if (obj.object == "line") {
-					document.getElementById("lenOrSide").value =
-						obj.v[1][0] - obj.v[0][0];
-					document.getElementById("lenOrSideOutput").innerHTML =
-						obj.v[1][0] - obj.v[0][0];
-					document.getElementById("tx").value = obj.v[0][0];
-					document.getElementById("txoutput").innerHTML = obj.v[0][0];
-					document.getElementById("ty").value = obj.v[0][1];
-					document.getElementById("tyoutput").innerHTML = obj.v[0][1];
+					this.info = "Line selected";
+					console.log(obj);
+					this.canvas.addEventListener("mousedown", function (e) {
+						let v1distance = euclideanDistance(
+							e.offsetX,
+							e.offsetY,
+							obj.v[1][0],
+							obj.v[1][1]
+						);
+						let v2distance = euclideanDistance(
+							e.offsetX,
+							e.offsetY,
+							obj.v[0][0],
+							obj.v[0][1]
+						);
+						this.startClickedCanvas = [e.offsetX, e.offsetY];
+						this.mouseClicked = true;
+						if (Math.max(v1distance, v2distance) === v1distance) {
+							console.log("11111111");
+							obj.v[1] = obj.v[0];
+							obj.v[0] = [e.offsetX, e.offsetY];
+						} else {
+							console.log("22222222222");
+							obj.v[0] = obj.v[1];
+							obj.v[1] = [e.offsetX, e.offsetY];
+						}
+					});
+					this.canvas.addEventListener("mouseup", function () {
+						this.mouseClicked = false;
+					});
+					this.canvas.addEventListener(
+						"mousemove",
+						function (e) {
+							if (this.mouseClicked) {
+								obj.v[0] = [e.offsetX, e.offsetY];
+								this.drawScene();
+							}
+						}.bind(this),
+						false
+					);
+					// document.getElementById("lenOrSide").value =
+					// 	obj.v[1][0] - obj.v[0][0];
+					// document.getElementById("lenOrSideOutput").innerHTML =
+					// 	obj.v[1][0] - obj.v[0][0];
+					// document.getElementById("tx").value = obj.v[0][0];
+					// document.getElementById("txoutput").innerHTML = obj.v[0][0];
+					// document.getElementById("ty").value = obj.v[0][1];
+					// document.getElementById("tyoutput").innerHTML = obj.v[0][1];
 				} else if (obj.object == "rectangle") {
+					this.info = "Rectangle selected";
 					document.getElementById("lenOrSide").value = obj.width;
 					document.getElementById("lenOrSideOutput").innerHTML = obj.width;
 					document.getElementById("tx").value = obj.x;
@@ -634,6 +680,7 @@ export default {
 					document.getElementById("ty").value = obj.y;
 					document.getElementById("tyoutput").innerHTML = obj.y;
 				} else if (obj.object == "square") {
+					this.info = "Square selected";
 					document.getElementById("lenOrSide").value = obj.side;
 					document.getElementById("lenOrSideOutput").innerHTML = obj.side;
 					document.getElementById("tx").value = obj.x;
@@ -641,6 +688,7 @@ export default {
 					document.getElementById("ty").value = obj.y;
 					document.getElementById("tyoutput").innerHTML = obj.y;
 				} else if (obj.object == "polygon") {
+					this.info = "Polygon selected";
 					document.getElementById("tx").value = obj.vertex[0];
 					document.getElementById("txoutput").innerHTML = obj.vertex[0];
 					document.getElementById("ty").value = obj.vertex[1];
