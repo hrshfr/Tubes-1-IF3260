@@ -100,7 +100,7 @@
 
 <script>
 /*eslint no-mixed-spaces-and-tabs: ["error", "smart-tabs"]*/
-import { isInside, euclideanDistance } from "./utils.js";
+import { isInside, euclideanDistance, gradient } from "./utils.js";
 
 export default {
 	name: "App",
@@ -252,8 +252,8 @@ export default {
 							y1: e.offsetY,
 							color: this.currentColor,
 							side: Math.max(
-								e.offsetX - this.startClickedCanvas[0],
-								e.offsetY - this.startClickedCanvas[1]
+								Math.abs(e.offsetX - this.startClickedCanvas[0]),
+								Math.abs(e.offsetY - this.startClickedCanvas[1])
 							),
 						});
 						this.drawSquare(this.allObjects[0]);
@@ -561,21 +561,24 @@ export default {
 				// line
 				if (this.allObjects[i].object == "line") {
 					const line = this.allObjects[i];
-					let eq = Math.abs(
-						(e.offsetY - line.v[0][1]) * (line.v[1][0] - line.v[0][0]) -
-							(e.offsetX - line.v[0][0]) * (line.v[1][1] - line.v[0][1])
-					);
+					// let eq = Math.abs(
+					// 	(e.offsetY - line.v[0][1]) * (line.v[1][0] - line.v[0][0]) -
+					// 		(e.offsetX - line.v[0][0]) * (line.v[1][1] - line.v[0][1])
+					// );
 
-					if (eq < 500) {
-						objIdx = i;
-					}
+					// if (eq < 500) {
+					// 	objIdx = i;
+					// }
+          let m1 = gradient(line.v[0][0],line.v[0][1],line.v[1][0],line.v[1][1])
+          let m2 = gradient(line.v[0][0],line.v[0][1],e.offsetX,e.offsetY)
+
+          if(Math.abs(m2-m1) < 0.05){
+            objIdx = i
+          }
 				}
 
 				// rectangle and square
-				else if (
-					this.allObjects[i].object == "rectangle" ||
-					this.allObjects[i].object == "square"
-				) {
+				else if (this.allObjects[i].object == "rectangle") {
 					const rect = this.allObjects[i];
 					let vertices = [
 						[rect.x, rect.y],
@@ -588,7 +591,24 @@ export default {
 					if (isInside(vertices, mousePos)) {
 						objIdx = i;
 					}
-				} else if (this.allObjects[i].object == "polygon") {
+				}
+        
+				else if (this.allObjects[i].object == "square") {
+					const square = this.allObjects[i];
+					let vertices = [
+						[square.x, square.y],
+						[square.x + square.side, square.y],
+						[square.x + square.side, square.y + square.side],
+						[square.x, square.y + square.side],
+					];
+					let mousePos = [e.offsetX, e.offsetY];
+
+					if (isInside(vertices, mousePos)) {
+						objIdx = i;
+					}
+				}  
+        
+        else if (this.allObjects[i].object == "polygon") {
 					let mousePos = [e.offsetX, e.offsetY];
 					let vertices = [
 						[this.allObjects[i].vertex[0], this.allObjects[i].vertex[1]],
@@ -618,10 +638,8 @@ export default {
 				document.getElementById("color-picker").value = obj.color;
 
 				if (obj.object == "line") {
-					document.getElementById("lenOrSide").value =
-						obj.v[1][0] - obj.v[0][0];
-					document.getElementById("lenOrSideOutput").innerHTML =
-						obj.v[1][0] - obj.v[0][0];
+					document.getElementById("lenOrSide").value = euclideanDistance(obj.v[0][0],obj.v[0][1],obj.v[1][0],obj.v[1][1]);
+					document.getElementById("lenOrSideOutput").innerHTML = euclideanDistance(obj.v[0][0],obj.v[0][1],obj.v[1][0],obj.v[1][1]);
 					document.getElementById("tx").value = obj.v[0][0];
 					document.getElementById("txoutput").innerHTML = obj.v[0][0];
 					document.getElementById("ty").value = obj.v[0][1];
@@ -708,13 +726,21 @@ export default {
 				let obj = this.allObjects[this.currentClickedPos[1]];
 
 				if (obj.object == "square") {
-					obj.width = parseFloat(e.target.value);
+					obj.side = parseFloat(e.target.value);
 					this.drawScene();
 				}
 				if (obj.object == "rectangle") {
 					obj.width = parseFloat(e.target.value);
 					this.drawScene();
 				}
+        if(obj.object == "line"){
+          // let ratio = parseFloat(e.target.value)/euclideanDistance(obj.v[0][0],obj.v[0][1],obj.v[1][0],obj.v[1][1]);
+          // obj.v[0][0] = ratio*obj.v[0][0]
+          // obj.v[0][1] = ratio*obj.v[0][1]
+          // obj.v[1][0] = ratio*obj.v[1][0]
+          // obj.v[1][1] = ratio*obj.v[1][1]
+          // this.drawScene();
+        }
 			}
 		},
 
