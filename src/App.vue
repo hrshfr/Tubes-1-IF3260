@@ -2,30 +2,19 @@
 	<div id="app">
 		<canvas width="900" @click="(e) => clickResponse(e)"></canvas>
 		<div id="container-menu">
-			<div class="information">
-				<h3>{{ info }}</h3>
+			<div>
+				<div class="information">
+					<h3>{{ info }}</h3>
+				</div>
+				<button class="clearbtn" @click="clear">Clear</button>
 			</div>
-			<button
+
+			<!-- <button
 				style="margin-top: 0.3rem; width: fit-content"
 				@click="printObject"
 			>
 				Show all object
-			</button>
-			<span> Files</span>
-			<div style="display: flex; gap: 0.5rem; margin-top: 0.3rem">
-				<button @click="saveFile">Save</button>
-				<input
-					id="load"
-					type="file"
-					accept=".json"
-					@input="(e) => loadFile()"
-				/>
-			</div>
-
-			<span style="margin-top: 1rem">Clear Screen:</span>
-			<button style="margin-top: 0.3rem; width: fit-content" @click="clear">
-				Clear
-			</button>
+			</button> -->
 
 			<span style="margin-top: 1rem">Action: </span>
 			<div style="display: flex; gap: 0.5rem; margin-top: 0.3rem">
@@ -54,10 +43,11 @@
 				</button>
 			</div>
 
-			<span style="margin-top: 1rem">Color:</span>
+			<span style="margin-top: 1rem">Pick color:</span>
 			<input
 				type="color"
 				id="color-picker"
+				v-model="currentColor"
 				style="margin-top: 0.3rem"
 				@input="(e) => handleColor(e)"
 			/>
@@ -102,6 +92,16 @@
 				/>
 				<output>{{ lenOrSide }}</output>
 			</div>
+			<div class="filemanagement">
+				<button @click="saveFile">Save</button>
+				<input
+					id="load"
+					class="custom-file-input"
+					type="file"
+					accept=".json"
+					@input="(e) => loadFile()"
+				/>
+			</div>
 		</div>
 	</div>
 </template>
@@ -136,7 +136,7 @@ export default {
 		positionLocation: "",
 		resolutionUniformLocation: "",
 		colorUniformLocation: "",
-		currentColor: [],
+		currentColor: "#a73f2d",
 		currentClickedPos: [],
 		currentSelectedObject: "",
 		currentSelectedObjectId: "",
@@ -146,7 +146,7 @@ export default {
 		startClickedCanvas: [],
 		mouseMoveCoordinate: [],
 		canvas: null,
-		info: "",
+		info: "Informasi",
 		lenOrSide: 0,
 	}),
 
@@ -1269,9 +1269,9 @@ export default {
 #container-menu {
 	width: 100%;
 	display: flex;
-	flex-flow: column;
-	justify-content: center;
-	padding: 0 2rem 0 2rem;
+	flex-direction: column;
+	padding: 3em;
+	background: #ffbf8b;
 }
 
 body {
@@ -1294,10 +1294,177 @@ canvas {
 	gap: 0.5rem;
 }
 .information {
-	display: flex;
-	justify-content: center;
-	margin: 0 2em;
 	border: 2px solid black;
 	border-radius: 8px;
+}
+.information h3 {
+	text-align: center;
+}
+.information-container {
+	display: flex;
+	flex-direction: column;
+	margin: 0 2em;
+}
+.clearbtn {
+	margin-top: 0.5em;
+	width: 100%;
+	padding: 1em;
+	border-radius: 8px;
+	box-shadow: inset 0px 1px 0px 0px #cf866c;
+	background: linear-gradient(to bottom, #d0451b 5%, #bc3315 100%);
+	background-color: #d0451b;
+	border: 1px solid #942911;
+	display: inline-block;
+	cursor: pointer;
+	color: #ffffff;
+	font-weight: bold;
+	font-size: 1em;
+	text-decoration: none;
+	text-shadow: 0px 1px 0px #854629;
+}
+.clearbtn:hover {
+	background: linear-gradient(to bottom, #bc3315 5%, #d0451b 100%);
+	background-color: #bc3315;
+}
+.clearbtn:active {
+	position: relative;
+	top: 1px;
+}
+.filemanagement {
+	margin: 1em 0;
+	display: flex;
+	justify-content: space-around;
+}
+.filemanagement button {
+	box-shadow: inset 0px 34px 0px -15px #b54b3a;
+	background-color: #a73f2d;
+	border: 1px solid #241d13;
+	display: inline-block;
+	cursor: pointer;
+	color: #ffffff;
+	font-family: Arial;
+	font-size: 15px;
+	font-weight: bold;
+	padding: 9px 23px;
+	text-decoration: none;
+	text-shadow: 0px -1px 0px #7a2a1d;
+	border-radius: 8px;
+}
+.filemanagement button:hover {
+	background-color: #b34332;
+}
+.filemanagement button:active {
+	position: relative;
+	top: 1px;
+}
+.custom-file-input::-webkit-file-upload-button {
+	visibility: hidden;
+}
+.custom-file-input::before {
+	content: "Select some files";
+	display: inline-block;
+	cursor: pointer;
+	text-shadow: 1px 1px #fff;
+	box-shadow: inset 0px 34px 0px -15px #b54b3a;
+	background-color: #a73f2d;
+	border: 1px solid #241d13;
+	cursor: pointer;
+	color: #ffffff;
+	font-size: 15px;
+	font-weight: bold;
+	padding: 9px 23px;
+	text-shadow: 0px -1px 0px #7a2a1d;
+	border-radius: 8px;
+}
+.custom-file-input:hover::before {
+	border-color: black;
+}
+input[type="range"] {
+	-webkit-appearance: none;
+	margin: 10px 0;
+	width: 100%;
+}
+input[type="range"]:focus {
+	outline: none;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+	width: 100%;
+	height: 11px;
+	cursor: pointer;
+	animate: 0.2s;
+	box-shadow: 1px 1px 1px #000000;
+	background: #a91b1b;
+	border-radius: 5px;
+	border: 1px solid #000000;
+}
+input[type="range"]::-webkit-slider-thumb {
+	box-shadow: 1px 1px 1px #000000;
+	border: 1px solid #000000;
+	height: 27px;
+	width: 18px;
+	border-radius: 5px;
+	background: #ffdb9e;
+	cursor: pointer;
+	-webkit-appearance: none;
+	margin-top: -9px;
+}
+input[type="range"]:focus::-webkit-slider-runnable-track {
+	background: #a91b1b;
+}
+input[type="range"]::-moz-range-track {
+	width: 100%;
+	height: 11px;
+	cursor: pointer;
+	animate: 0.2s;
+	box-shadow: 1px 1px 1px #000000;
+	background: #a91b1b;
+	border-radius: 5px;
+	border: 1px solid #000000;
+}
+input[type="range"]::-moz-range-thumb {
+	box-shadow: 1px 1px 1px #000000;
+	border: 1px solid #000000;
+	height: 27px;
+	width: 18px;
+	border-radius: 5px;
+	background: #ffdb9e;
+	cursor: pointer;
+}
+input[type="range"]::-ms-track {
+	width: 100%;
+	height: 11px;
+	cursor: pointer;
+	animate: 0.2s;
+	background: transparent;
+	border-color: transparent;
+	color: transparent;
+}
+input[type="range"]::-ms-fill-lower {
+	background: #a91b1b;
+	border: 1px solid #000000;
+	border-radius: 10px;
+	box-shadow: 1px 1px 1px #000000;
+}
+input[type="range"]::-ms-fill-upper {
+	background: #a91b1b;
+	border: 1px solid #000000;
+	border-radius: 10px;
+	box-shadow: 1px 1px 1px #000000;
+}
+input[type="range"]::-ms-thumb {
+	margin-top: 1px;
+	box-shadow: 1px 1px 1px #000000;
+	border: 1px solid #000000;
+	height: 27px;
+	width: 18px;
+	border-radius: 5px;
+	background: #ffdb9e;
+	cursor: pointer;
+}
+input[type="range"]:focus::-ms-fill-lower {
+	background: #a91b1b;
+}
+input[type="range"]:focus::-ms-fill-upper {
+	background: #a91b1b;
 }
 </style>
