@@ -328,6 +328,7 @@ export default {
 							];
 						}
 					}
+
 					if (obj.object == "square") {
 						let vertexDistance = {};
 						if (obj.x1 > obj.x) {
@@ -567,6 +568,105 @@ export default {
 							);
 						}
 					}
+					if (obj.object == "rectangle") {
+						let vertexDistance = (vertexDistance = {
+							v1: {
+								x: obj.x,
+								y: obj.y,
+								distance: euclideanDistance(
+									this.startClickedCanvas[0],
+									this.startClickedCanvas[1],
+									obj.x,
+									obj.y
+								),
+							},
+							v2: {
+								x: obj.x + obj.width,
+								y: obj.y,
+								distance: euclideanDistance(
+									this.startClickedCanvas[0],
+									this.startClickedCanvas[1],
+									obj.x + obj.width,
+									obj.y
+								),
+							},
+							v3: {
+								x: obj.x + obj.width,
+								y: obj.y + obj.height,
+								distance: euclideanDistance(
+									this.startClickedCanvas[0],
+									this.startClickedCanvas[1],
+									obj.x + obj.width,
+									obj.y + obj.height
+								),
+							},
+							v4: {
+								x: obj.x,
+								y: obj.y + obj.height,
+								distance: euclideanDistance(
+									//vklik4benar
+									this.startClickedCanvas[0],
+									this.startClickedCanvas[1],
+									obj.x,
+									obj.y + obj.height
+								),
+							},
+						});
+
+						if (this.mouseMoveCoordinate.length !== 0) {
+							if (
+								Math.min(
+									vertexDistance.v1.distance,
+									vertexDistance.v2.distance,
+									vertexDistance.v3.distance,
+									vertexDistance.v4.distance
+								) === vertexDistance.v1.distance
+							) {
+								console.log(" v1");
+								obj.x = vertexDistance.v3.x;
+								obj.y = vertexDistance.v3.y;
+							}
+							if (
+								Math.min(
+									vertexDistance.v1.distance,
+									vertexDistance.v2.distance,
+									vertexDistance.v3.distance,
+									vertexDistance.v4.distance
+								) === vertexDistance.v2.distance
+							) {
+								console.log(" v2");
+								obj.x = vertexDistance.v4.x;
+								obj.y = vertexDistance.v4.y;
+							}
+							if (
+								Math.min(
+									vertexDistance.v1.distance,
+									vertexDistance.v2.distance,
+									vertexDistance.v3.distance,
+									vertexDistance.v4.distance
+								) === vertexDistance.v3.distance
+							) {
+								console.log(" v3");
+								obj.x = vertexDistance.v1.x;
+								obj.y = vertexDistance.v1.y;
+							}
+							if (
+								Math.min(
+									vertexDistance.v1.distance,
+									vertexDistance.v2.distance,
+									vertexDistance.v3.distance,
+									vertexDistance.v4.distance
+								) === vertexDistance.v4.distance
+							) {
+								console.log(" v4");
+								obj.x = vertexDistance.v2.x;
+								obj.y = vertexDistance.v2.y;
+							}
+							obj.width = this.mouseMoveCoordinate[0] - obj.x;
+							obj.height = this.mouseMoveCoordinate[1] - obj.y;
+						}
+					}
+
 					this.drawScene();
 				}
 			}
