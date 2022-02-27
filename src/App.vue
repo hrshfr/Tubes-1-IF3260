@@ -153,29 +153,24 @@
 <script>
 /*eslint no-mixed-spaces-and-tabs: ["error", "smart-tabs"]*/
 import { isInside, euclideanDistance, gradient } from "./utils.js";
-
 export default {
 	name: "App",
 	data: () => ({
 		vertexSource: `
       attribute vec2 a_position;
       uniform vec2 u_resolution;
-
       void main() {
         vec2 zeroToOne = a_position / u_resolution;
         vec2 zeroToTwo = zeroToOne * 2.0;
         vec2 clipSpace = zeroToTwo - 1.0;
         gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
       }`,
-
 		fragmentSource: `
       precision highp float;
-
       uniform vec4 u_color;
       void main() {
         gl_FragColor = u_color;
       }`,
-
 		gl: "",
 		positionLocation: "",
 		resolutionUniformLocation: "",
@@ -193,18 +188,14 @@ export default {
 		info: "Information",
 		lenOrSide: 0,
 	}),
-
 	mounted() {
 		this.canvas = document.querySelector("canvas");
 		this.gl = this.canvas.getContext("webgl", { preserveDrawingBuffer: true });
-
 		this.canvas.height = window.innerHeight;
 		document.getElementById("ty").max = window.innerHeight;
-
 		if (!this.gl) {
 			throw new Error("WebGL not supported");
 		}
-
 		const vertexShader = this.createShader(
 			this.gl,
 			this.gl.VERTEX_SHADER,
@@ -216,14 +207,12 @@ export default {
 			this.fragmentSource
 		);
 		const program = this.createProgram(this.gl, vertexShader, fragmentShader);
-
 		this.positionLocation = this.gl.getAttribLocation(program, "a_position");
 		this.resolutionUniformLocation = this.gl.getUniformLocation(
 			program,
 			"u_resolution"
 		);
 		this.colorUniformLocation = this.gl.getUniformLocation(program, "u_color");
-
 		const buffer = this.gl.createBuffer();
 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
 		this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
@@ -372,7 +361,6 @@ export default {
 							];
 						}
 					}
-
 					if (obj.object == "square") {
 						let vertexDistance = {};
 						if (obj.x1 > obj.x) {
@@ -554,7 +542,6 @@ export default {
 								};
 							}
 						}
-
 						if (this.mouseMoveCoordinate.length !== 0) {
 							if (
 								Math.min(
@@ -656,7 +643,6 @@ export default {
 								),
 							},
 						});
-
 						if (this.mouseMoveCoordinate.length !== 0) {
 							if (
 								Math.min(
@@ -724,7 +710,6 @@ export default {
 								vertexPolygon.push([obj.vertex[j - 1], obj.vertex[j]]);
 							}
 						}
-
 						console.log(vertexPolygon);
 						let vertexPolygonDistance = [];
 						for (let i = 0; i < vertexPolygon.length; i++) {
@@ -737,14 +722,34 @@ export default {
 								)
 							);
 						}
-						console.log(
-							"V " +
-								vertexPolygonDistance.indexOf(
-									Math.min(...vertexPolygonDistance)
-								)
-						);
-					}
 
+            let min_idx = vertexPolygonDistance.indexOf(Math.min(...vertexPolygonDistance))
+            let min_vertex = vertexPolygon[min_idx]
+            // let moved_idx = []
+
+            for(let i=0;i<obj.vertex.length-1;i++){
+              if(obj.vertex[i]==min_vertex[0] && obj.vertex[i+1]==min_vertex[1]){
+                obj.vertex[i] = this.mouseMoveCoordinate[0]
+                obj.vertex[i+1] = this.mouseMoveCoordinate[1]
+              }
+            }
+            // for(let i=0;i<vertexPolygon.length;i++){
+            //   if (vertexPolygon[i][0]==min_vertex[0] && vertexPolygon[i][1]==min_vertex[1]){
+            //     moved_idx.push(i)
+            //   }
+            // }
+
+            // for (let i=0;i<moved_idx.length;i++){
+
+            // }
+
+            // console.log(
+            //   "V " +
+            //     vertexPolygonDistance.indexOf(
+            //       Math.min(...vertexPolygonDistance)
+            //     )
+            // );
+					}
 					this.drawScene();
 				}
 			}
@@ -756,7 +761,6 @@ export default {
 			this.gl.clearColor(0, 0, 0, 0);
 			this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 		},
-
 		createShader(gl, type, source) {
 			const shader = gl.createShader(type);
 			gl.shaderSource(shader, source);
@@ -765,11 +769,9 @@ export default {
 			if (success) {
 				return shader;
 			}
-
 			console.log(gl.getShaderInfoLog(shader));
 			gl.deleteShader(shader);
 		},
-
 		createProgram(gl, vertexShader, fragmentShader) {
 			const program = gl.createProgram();
 			gl.attachShader(program, vertexShader);
@@ -779,19 +781,15 @@ export default {
 			if (success) {
 				return program;
 			}
-
 			console.log(gl.getProgramInfoLog(program));
 			gl.deleteProgram(program);
 		},
-
 		drawRectangle(rect) {
 			var x1 = rect.x;
 			var x2 = rect.x + rect.width;
 			var y1 = rect.y;
 			var y2 = rect.y + rect.height;
-
 			const vertexData = [x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2];
-
 			let color = this.hexToRGB(rect.color);
 			this.gl.bufferData(
 				this.gl.ARRAY_BUFFER,
@@ -807,13 +805,11 @@ export default {
 			);
 			this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 		},
-
 		drawSquare(square) {
 			let x1 = 0;
 			let x2 = 0;
 			let y1 = 0;
 			let y2 = 0;
-
 			if (square.x1 > square.x) {
 				if (square.y1 > square.y) {
 					x1 = square.x;
@@ -839,9 +835,7 @@ export default {
 					y2 = square.y - square.side;
 				}
 			}
-
 			const vertexData = [x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2];
-
 			let color = this.hexToRGB(square.color);
 			this.gl.bufferData(
 				this.gl.ARRAY_BUFFER,
@@ -864,7 +858,6 @@ export default {
 				line.v[1][0],
 				line.v[1][1],
 			];
-
 			let color = this.hexToRGB(line.color);
 			this.gl.bufferData(
 				this.gl.ARRAY_BUFFER,
@@ -880,7 +873,6 @@ export default {
 			);
 			this.gl.drawArrays(this.gl.LINES, 0, 2);
 		},
-
 		hexToRGB(hex) {
 			var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
 			return result
@@ -891,16 +883,13 @@ export default {
 				  ]
 				: null;
 		},
-
 		handleColor(e) {
 			this.currentColor = e.target.value;
-
 			if (this.currentClickedPos != []) {
 				this.allObjects[this.currentClickedPos[1]].color = e.target.value;
 				this.drawScene();
 			}
 		},
-
 		clickResponse(e) {
 			if (this.currentSelectedObject == "select") {
 				this.selectObject(e);
@@ -922,7 +911,6 @@ export default {
 				}
 			}
 		},
-
 		drawPolygon(vertexData, colorHex) {
 			let color = this.hexToRGB(colorHex);
 			this.gl.bufferData(
@@ -939,7 +927,6 @@ export default {
 			);
 			this.gl.drawArrays(this.gl.TRIANGLES, 0, vertexData.length / 2);
 		},
-
 		stopDrawingPolygon() {
 			this.allObjects.unshift({
 				id: this.allObjects.length + 1,
@@ -949,15 +936,12 @@ export default {
 			});
 			this.currPolygonVertex = [];
 		},
-
 		vertexPicking(e, objIdx) {
 			if (objIdx == null) {
 				this.currentClickedPos = [null, null];
 			}
-
 			let nearestIdx = null;
 			let minDist = 10;
-
 			// line
 			if (this.allObjects[objIdx].object == "line") {
 				const line = this.allObjects[objIdx];
@@ -973,7 +957,6 @@ export default {
 					line.v[1][0],
 					line.v[1][1]
 				);
-
 				if (v1 < minDist) {
 					minDist = v1;
 					nearestIdx = 0;
@@ -983,7 +966,6 @@ export default {
 					nearestIdx = 1;
 				}
 			}
-
 			//  square
 			else if (this.allObjects[objIdx].object == "square") {
 				const rect = this.allObjects[objIdx];
@@ -993,7 +975,6 @@ export default {
 					[rect.x + rect.side, rect.y + rect.side],
 					[rect.x, rect.y + rect.side],
 				];
-
 				for (let i = 0; i < vertices.length; i++) {
 					let v = euclideanDistance(
 						e.offsetX,
@@ -1001,7 +982,6 @@ export default {
 						vertices[i][0],
 						vertices[i][1]
 					);
-
 					if (v < minDist) {
 						minDist = v;
 						nearestIdx = i;
@@ -1017,7 +997,6 @@ export default {
 					[rect.x + rect.width, rect.y + rect.height],
 					[rect.x, rect.y + rect.height],
 				];
-
 				for (let i = 0; i < vertices.length; i++) {
 					let v = euclideanDistance(
 						e.offsetX,
@@ -1025,7 +1004,6 @@ export default {
 						vertices[i][0],
 						vertices[i][1]
 					);
-
 					if (v < minDist) {
 						minDist = v;
 						nearestIdx = i;
@@ -1052,12 +1030,10 @@ export default {
 						line.v[1][1]
 					);
 					let m2 = gradient(line.v[0][0], line.v[0][1], e.offsetX, e.offsetY);
-
 					if (Math.abs(m2 - m1) < 0.05) {
 						objIdx = i;
 					}
 				}
-
 				// rectangle and square
 				if (this.allObjects[i].object === "square") {
 					const square = this.allObjects[i];
@@ -1095,9 +1071,7 @@ export default {
 							];
 						}
 					}
-
 					let mousePos = [e.offsetX, e.offsetY];
-
 					if (isInside(vertices, mousePos)) {
 						objIdx = i;
 					}
@@ -1111,12 +1085,10 @@ export default {
 						[rect.x, rect.y + rect.height],
 					];
 					let mousePos = [e.offsetX, e.offsetY];
-
 					if (isInside(vertices, mousePos)) {
 						objIdx = i;
 					}
 				}
-
 				if (this.allObjects[i].object == "polygon") {
 					let mousePos = [e.offsetX, e.offsetY];
 					let vertices = [
@@ -1124,30 +1096,24 @@ export default {
 						[this.allObjects[i].vertex[2], this.allObjects[i].vertex[3]],
 						[this.allObjects[i].vertex[4], this.allObjects[i].vertex[5]],
 					];
-
 					for (let j = 10; j < this.allObjects[i].vertex.length; j += 6) {
 						vertices.push([
 							this.allObjects[i].vertex[j],
 							this.allObjects[i].vertex[j + 1],
 						]);
 					}
-
 					if (isInside(vertices, mousePos)) {
 						objIdx = i;
 					}
 				}
 			}
-
 			if (objIdx != null) {
 				this.vertexPicking(e, objIdx);
-
 				let obj = this.allObjects[objIdx];
 				document.getElementById("color-picker").value = obj.color;
-
 				if (obj.object == "line") {
 					this.info = "Line #" + obj.id + " selected";
 					this.currentSelectedObjectId = obj.id;
-
 					document.getElementById("lenOrSide").disabled = true;
 					document.getElementById("tx").value = obj.v[0][0];
 					document.getElementById("txoutput").innerHTML = obj.v[0][0];
@@ -1190,7 +1156,6 @@ export default {
 			}
 			//return objIdx;
 		},
-
 		updatePositionX(e) {
 			if (this.currentClickedPos != []) {
 				let obj = this.allObjects[this.currentClickedPos[1]];
@@ -1211,13 +1176,11 @@ export default {
 				this.drawScene();
 			}
 		},
-
 		updatePositionY(e) {
 			if (this.currentClickedPos != []) {
 				let obj = this.allObjects[this.currentClickedPos[1]];
 				if (obj.object == "line") {
 					let diff = obj.v[1][1] - obj.v[0][1];
-
 					obj.v[0][1] = parseFloat(e.target.value);
 					obj.v[1][1] = parseFloat(e.target.value) + diff;
 				} else if (obj.object == "square" || obj.object == "rectangle") {
@@ -1230,16 +1193,13 @@ export default {
 						}
 					}
 				}
-
 				this.drawScene();
 			}
 		},
-
 		updateLength(e) {
 			let obj = this.allObjects.find(
 				(item) => item.id == this.currentSelectedObjectId
 			);
-
 			if (obj.object == "square") {
 				obj.side = parseFloat(e.target.value);
 				this.drawScene();
@@ -1281,11 +1241,9 @@ export default {
 				this.drawScene();
 			}
 		},
-
 		drawScene() {
 			this.gl.clearColor(0, 0, 0, 0);
 			this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-
 			for (let i = this.allObjects.length - 1; i >= 0; i--) {
 				if (this.allObjects[i].object == "rectangle") {
 					this.drawRectangle(this.allObjects[i]);
@@ -1298,23 +1256,18 @@ export default {
 				}
 			}
 		},
-
 		saveFile() {
 			const filename = "drawing.json";
 			const jsonStr = JSON.stringify(this.allObjects);
-
 			let element = document.createElement("a");
 			element.setAttribute(
 				"href",
 				"data:text/plain;charset=utf-8," + encodeURIComponent(jsonStr)
 			);
 			element.setAttribute("download", filename);
-
 			element.style.display = "none";
 			document.body.appendChild(element);
-
 			element.click();
-
 			document.body.removeChild(element);
 		},
 		printObject() {
@@ -1325,7 +1278,6 @@ export default {
 			if (file) {
 				var reader = new FileReader();
 				reader.readAsText(file, "UTF-8");
-
 				reader.onload = (e) => {
 					this.clear();
 					this.allObjects = JSON.parse(e.target.result);
@@ -1342,7 +1294,6 @@ export default {
 #app {
 	display: flex;
 }
-
 #container-menu {
 	width: 100%;
 	display: flex;
@@ -1350,7 +1301,6 @@ export default {
 	padding: 3em;
 	background: #ffbf8b;
 }
-
 body {
 	margin: 0 0 0 0;
 	overflow: hidden;
@@ -1360,12 +1310,10 @@ canvas {
 	height: 100%;
 	background-color: black;
 }
-
 #container-canvas-button {
 	display: flex;
 	flex-direction: column;
 }
-
 #container-button {
 	display: flex;
 	gap: 0.5rem;
