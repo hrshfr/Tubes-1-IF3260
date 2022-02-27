@@ -711,7 +711,38 @@ export default {
 						}
 					}
 					if (obj.object == "polygon") {
-						// new vertex x,y = this.mouseMoveCoordinate[0] ,his.mouseMoveCoordinate[1]
+						let vertexPolygon = [];
+						if (obj.vertex.length <= 6) {
+							for (let i = 0; i < obj.vertex.length; i += 2) {
+								vertexPolygon.push([obj.vertex[i], obj.vertex[i + 1]]);
+							}
+						} else {
+							for (let i = 0; i < 4; i += 2) {
+								vertexPolygon.push([obj.vertex[i], obj.vertex[i + 1]]);
+							}
+							for (let j = 5; j < obj.vertex.length; j += 6) {
+								vertexPolygon.push([obj.vertex[j - 1], obj.vertex[j]]);
+							}
+						}
+
+						console.log(vertexPolygon);
+						let vertexPolygonDistance = [];
+						for (let i = 0; i < vertexPolygon.length; i++) {
+							vertexPolygonDistance.push(
+								euclideanDistance(
+									this.startClickedCanvas[0],
+									this.startClickedCanvas[1],
+									vertexPolygon[i][0],
+									vertexPolygon[i][1]
+								)
+							);
+						}
+						console.log(
+							"V " +
+								vertexPolygonDistance.indexOf(
+									Math.min(...vertexPolygonDistance)
+								)
+						);
 					}
 
 					this.drawScene();
