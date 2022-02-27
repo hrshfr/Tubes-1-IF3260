@@ -9,12 +9,12 @@
 				<button class="clearbtn" @click="clear">Clear</button>
 			</div>
 
-			<!-- <button
+			<button
 				style="margin-top: 0.3rem; width: fit-content"
 				@click="printObject"
 			>
 				Show all object
-			</button> -->
+			</button>
 
 			<span style="margin-top: 1rem">Action: </span>
 			<div style="display: flex; gap: 0.5rem; margin-top: 0.3rem">
@@ -102,7 +102,7 @@
 					@input="(e) => loadFile()"
 				/>
 			</div>
-			<div id="help" style="margin-top: 30px;">
+			<div id="help" style="margin-top: 30px">
 				<div class="items">
 					<h4>Drawing Line/Square/Rectangle</h4>
 					<ol>
@@ -190,7 +190,7 @@ export default {
 		startClickedCanvas: [],
 		mouseMoveCoordinate: [],
 		canvas: null,
-		info: "Informasi",
+		info: "Information",
 		lenOrSide: 0,
 	}),
 
@@ -710,6 +710,9 @@ export default {
 							obj.height = this.mouseMoveCoordinate[1] - obj.y;
 						}
 					}
+					if (obj.object == "polygon") {
+						// new vertex x,y = this.mouseMoveCoordinate[0] ,his.mouseMoveCoordinate[1]
+					}
 
 					this.drawScene();
 				}
@@ -1101,8 +1104,6 @@ export default {
 					if (isInside(vertices, mousePos)) {
 						objIdx = i;
 					}
-					console.log(this.allObjects[i].vertex);
-					console.log(vertices);
 				}
 			}
 
@@ -1140,6 +1141,7 @@ export default {
 				} else if (obj.object == "polygon") {
 					this.info = "Polygon #" + obj.id + " selected";
 					this.currentSelectedObjectId = obj.id;
+					document.getElementById("lenOrSide").disabled = true;
 					document.getElementById("tx").value = obj.vertex[0];
 					document.getElementById("txoutput").innerHTML = obj.vertex[0];
 					document.getElementById("ty").value = obj.vertex[1];
@@ -1338,7 +1340,7 @@ canvas {
 	gap: 0.5rem;
 }
 .information {
-	border: 2px solid black;
+	border: 4px solid #942911;
 	border-radius: 8px;
 }
 .information h3 {
@@ -1360,7 +1362,7 @@ canvas {
 	border: 1px solid #942911;
 	display: inline-block;
 	cursor: pointer;
-	color: #ffffff;
+	color: #ffbf8b;
 	font-weight: bold;
 	font-size: 1em;
 	text-decoration: none;
@@ -1385,7 +1387,7 @@ canvas {
 	border: 1px solid #241d13;
 	display: inline-block;
 	cursor: pointer;
-	color: #ffffff;
+	color: #ffbf8b;
 	font-family: Arial;
 	font-size: 15px;
 	font-weight: bold;
@@ -1413,7 +1415,7 @@ canvas {
 	background-color: #a73f2d;
 	border: 1px solid #241d13;
 	cursor: pointer;
-	color: #ffffff;
+	color: #ffbf8b;
 	font-size: 15px;
 	font-weight: bold;
 	padding: 9px 23px;
