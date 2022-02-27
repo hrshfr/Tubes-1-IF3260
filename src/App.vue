@@ -328,18 +328,245 @@ export default {
 							];
 						}
 					}
-					// if (obj.object == "square") {
-					// 	let v0 = [obj.x,obj.y];
-					// 	let v1 = [obj.x,obj.y];
-					// 	let v2 = [obj.x,obj.y];
-					// 	let v3 = [obj.x,obj.y];
-					// 	obj.x1 = this.mouseMoveCoordinate[0];
-					// 	obj.y1 = this.mouseMoveCoordinate[1];
-					// 	obj.side = Math.max(
-					// 		Math.abs(this.mouseMoveCoordinate[0] - obj.x),
-					// 		Math.abs(this.mouseMoveCoordinate[1] - obj.y)
-					// 	);
-					// }
+					if (obj.object == "square") {
+						let vertexDistance = {};
+						if (obj.x1 > obj.x) {
+							if (obj.y1 > obj.y) {
+								vertexDistance = {
+									v1: {
+										x: obj.x,
+										y: obj.y,
+										distance: euclideanDistance(
+											this.startClickedCanvas[0],
+											this.startClickedCanvas[1],
+											obj.x,
+											obj.y
+										),
+									},
+									v2: {
+										x: obj.x + obj.side,
+										y: obj.y,
+										distance: euclideanDistance(
+											this.startClickedCanvas[0],
+											this.startClickedCanvas[1],
+											obj.x + obj.side,
+											obj.y
+										),
+									},
+									v3: {
+										x: obj.x + obj.side,
+										y: obj.y + obj.side,
+										distance: euclideanDistance(
+											this.startClickedCanvas[0],
+											this.startClickedCanvas[1],
+											obj.x + obj.side,
+											obj.y + obj.side
+										),
+									},
+									v4: {
+										x: obj.x,
+										y: obj.y + obj.side,
+										distance: euclideanDistance(
+											//vklik4benar
+											this.startClickedCanvas[0],
+											this.startClickedCanvas[1],
+											obj.x,
+											obj.y + obj.side
+										),
+									},
+								};
+							} else {
+								vertexDistance = {
+									v1: {
+										x: obj.x,
+										y: obj.y - obj.side,
+										distance: euclideanDistance(
+											this.startClickedCanvas[0],
+											this.startClickedCanvas[1],
+											obj.x,
+											obj.y - obj.side
+										),
+									},
+									v2: {
+										x: obj.x + obj.side,
+										y: obj.y - obj.side,
+										distance: euclideanDistance(
+											//vklik1benar
+											this.startClickedCanvas[0],
+											this.startClickedCanvas[1],
+											obj.x + obj.side,
+											obj.y - obj.side
+										),
+									},
+									v3: {
+										x: obj.x + obj.side,
+										y: obj.y,
+										distance: euclideanDistance(
+											this.startClickedCanvas[0],
+											this.startClickedCanvas[1],
+											obj.x + obj.side,
+											obj.y
+										),
+									},
+									v4: {
+										x: obj.x,
+										y: obj.y,
+										distance: euclideanDistance(
+											this.startClickedCanvas[0],
+											this.startClickedCanvas[1],
+											obj.x,
+											obj.y
+										),
+									},
+								};
+							}
+						} else {
+							if (obj.y1 > obj.y) {
+								vertexDistance = {
+									v1: {
+										x: obj.x - obj.side,
+										y: obj.y,
+										distance: euclideanDistance(
+											this.startClickedCanvas[0],
+											this.startClickedCanvas[1],
+											obj.x - obj.side,
+											obj.y
+										),
+									},
+									v2: {
+										x: obj.x,
+										y: obj.y,
+										distance: euclideanDistance(
+											this.startClickedCanvas[0],
+											this.startClickedCanvas[1],
+											obj.x,
+											obj.y
+										),
+									},
+									v3: {
+										x: obj.x,
+										y: obj.y + obj.side,
+										distance: euclideanDistance(
+											this.startClickedCanvas[0],
+											this.startClickedCanvas[1],
+											obj.x,
+											obj.y + obj.side
+										),
+									},
+									v4: {
+										x: obj.x - obj.side,
+										y: obj.y + obj.side,
+										distance: euclideanDistance(
+											this.startClickedCanvas[0],
+											this.startClickedCanvas[1],
+											obj.x - obj.side,
+											obj.y + obj.side
+										),
+									},
+								};
+							} else {
+								vertexDistance = {
+									v1: {
+										x: obj.x - obj.side,
+										y: obj.y - obj.side,
+										distance: euclideanDistance(
+											this.startClickedCanvas[0],
+											this.startClickedCanvas[1],
+											obj.x - obj.side,
+											obj.y - obj.side
+										),
+									},
+									v2: {
+										x: obj.x,
+										y: obj.y - obj.side,
+										distance: euclideanDistance(
+											this.startClickedCanvas[0],
+											this.startClickedCanvas[1],
+											obj.x,
+											obj.y - obj.side
+										),
+									},
+									v3: {
+										x: obj.x,
+										y: obj.y,
+										distance: euclideanDistance(
+											this.startClickedCanvas[0],
+											this.startClickedCanvas[1],
+											obj.x,
+											obj.y
+										),
+									},
+									v4: {
+										x: obj.x - obj.side,
+										y: obj.y,
+										distance: euclideanDistance(
+											this.startClickedCanvas[0],
+											this.startClickedCanvas[1],
+											obj.x - obj.side,
+											obj.y
+										),
+									},
+								};
+							}
+						}
+
+						if (this.mouseMoveCoordinate.length !== 0) {
+							if (
+								Math.min(
+									vertexDistance.v1.distance,
+									vertexDistance.v2.distance,
+									vertexDistance.v3.distance,
+									vertexDistance.v4.distance
+								) === vertexDistance.v1.distance
+							) {
+								console.log(" v1");
+								obj.x = vertexDistance.v3.x;
+								obj.y = vertexDistance.v3.y;
+							}
+							if (
+								Math.min(
+									vertexDistance.v1.distance,
+									vertexDistance.v2.distance,
+									vertexDistance.v3.distance,
+									vertexDistance.v4.distance
+								) === vertexDistance.v2.distance
+							) {
+								console.log(" v2");
+								obj.x = vertexDistance.v4.x;
+								obj.y = vertexDistance.v4.y;
+							}
+							if (
+								Math.min(
+									vertexDistance.v1.distance,
+									vertexDistance.v2.distance,
+									vertexDistance.v3.distance,
+									vertexDistance.v4.distance
+								) === vertexDistance.v3.distance
+							) {
+								console.log(" v3");
+								obj.x = vertexDistance.v1.x;
+								obj.y = vertexDistance.v1.y;
+							}
+							if (
+								Math.min(
+									vertexDistance.v1.distance,
+									vertexDistance.v2.distance,
+									vertexDistance.v3.distance,
+									vertexDistance.v4.distance
+								) === vertexDistance.v4.distance
+							) {
+								console.log(" v4");
+								obj.x = vertexDistance.v2.x;
+								obj.y = vertexDistance.v2.y;
+							}
+							obj.x1 = this.mouseMoveCoordinate[0];
+							obj.y1 = this.mouseMoveCoordinate[1];
+							obj.side = Math.max(
+								Math.abs(this.mouseMoveCoordinate[0] - obj.x),
+								Math.abs(this.mouseMoveCoordinate[1] - obj.y)
+							);
+						}
+					}
 					this.drawScene();
 				}
 			}
@@ -629,9 +856,6 @@ export default {
 			} else if (this.allObjects[objIdx].object == "polygon") {
 				// polygon
 			}
-
-			// output
-			console.log([nearestIdx, objIdx]);
 			this.currentClickedPos = [nearestIdx, objIdx];
 		},
 		getMoveVertex(e) {
