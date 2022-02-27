@@ -102,6 +102,50 @@
 					@input="(e) => loadFile()"
 				/>
 			</div>
+			<div id="help" style="margin-top: 30px;">
+				<div class="items">
+					<h4>Drawing Line/Square/Rectangle</h4>
+					<ol>
+						<li>Select Color</li>
+						<li>Select Action : Line/Square/Rectangle</li>
+						<li>Click and hold on the canvas then drag</li>
+					</ol>
+				</div>
+				<div class="items">
+					<h4>Drawing Polygon</h4>
+					<ol>
+						<li>Select Color</li>
+						<li>Select Action : Polygon</li>
+						<li>Click on the canvas to set the vertices of the polygon</li>
+					</ol>
+				</div>
+				<div class="items">
+					<h4>Changing Shape Color</h4>
+					<ol>
+						<li>Select Action : Select Object</li>
+						<li>Click the object on the canvas</li>
+						<li>The selected object will appear on the top right box</li>
+						<li>Select Color</li>
+					</ol>
+				</div>
+				<div class="items">
+					<h4>Changing Line/Square/Rectangle Length</h4>
+					<ol>
+						<li>Select Action : Select Object</li>
+						<li>Click the object on the canvas</li>
+						<li>The selected object will appear on the top right box</li>
+						<li>Drag the Length/Side slider</li>
+					</ol>
+				</div>
+				<div class="items">
+					<h4>Dragging Vertices</h4>
+					<ol>
+						<li>Select Action : Select Object</li>
+						<li>Click the object on the canvas</li>
+						<li>Drag the vertex</li>
+					</ol>
+				</div>
+			</div>
 		</div>
 	</div>
 </template>
@@ -1466,5 +1510,13 @@ input[type="range"]:focus::-ms-fill-lower {
 }
 input[type="range"]:focus::-ms-fill-upper {
 	background: #a91b1b;
+}
+.items {
+	display: inline-block;
+	vertical-align: top;
+	width: 280px;
+	margin: 0px 5px;
+	font-family: Arial;
+	font-size: 10pt;
 }
 </style>
