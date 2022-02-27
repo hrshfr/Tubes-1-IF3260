@@ -144,6 +144,7 @@ export default {
 		currPolygonVertex: [],
 		mouseClicked: false,
 		startClickedCanvas: [],
+		mouseMoveCoordinate: [],
 		canvas: null,
 		info: "",
 		lenOrSide: 0,
@@ -248,6 +249,7 @@ export default {
 			"mousemove",
 			function (e) {
 				if (this.mouseClicked) {
+					this.mouseMoveCoordinate = [e.offsetX, e.offsetY];
 					if (this.currentSelectedObject === "line") {
 						this.allObjects.shift();
 						this.allObjects.unshift({
@@ -296,6 +298,51 @@ export default {
 	watch: {
 		allObjects() {
 			this.drawScene();
+		},
+		mouseMoveCoordinate() {
+			if (this.currentSelectedObject == "select") {
+				if (this.mouseClicked) {
+					let obj = this.allObjects.find(
+						(item) => item.id == this.currentSelectedObjectId
+					);
+					if (obj.object == "line") {
+						let v0distance = euclideanDistance(
+							this.startClickedCanvas[0],
+							this.startClickedCanvas[1],
+							obj.v[0][0],
+							obj.v[0][1]
+						);
+						let v1distance = euclideanDistance(
+							this.startClickedCanvas[0],
+							this.startClickedCanvas[1],
+							obj.v[1][0],
+							obj.v[1][1]
+						);
+						if (this.mouseMoveCoordinate.length !== 0) {
+							if (Math.max(v0distance, v1distance) === v1distance) {
+								obj.v[0] = obj.v[1];
+							}
+							obj.v[1] = [
+								this.mouseMoveCoordinate[0],
+								this.mouseMoveCoordinate[1],
+							];
+						}
+					}
+					// if (obj.object == "square") {
+					// 	let v0 = [obj.x,obj.y];
+					// 	let v1 = [obj.x,obj.y];
+					// 	let v2 = [obj.x,obj.y];
+					// 	let v3 = [obj.x,obj.y];
+					// 	obj.x1 = this.mouseMoveCoordinate[0];
+					// 	obj.y1 = this.mouseMoveCoordinate[1];
+					// 	obj.side = Math.max(
+					// 		Math.abs(this.mouseMoveCoordinate[0] - obj.x),
+					// 		Math.abs(this.mouseMoveCoordinate[1] - obj.y)
+					// 	);
+					// }
+					this.drawScene();
+				}
+			}
 		},
 	},
 	methods: {
@@ -587,10 +634,11 @@ export default {
 			console.log([nearestIdx, objIdx]);
 			this.currentClickedPos = [nearestIdx, objIdx];
 		},
-
+		getMoveVertex(e) {
+			return e;
+		},
 		selectObject(e) {
 			let objIdx = null;
-
 			for (let i = 0; i < this.allObjects.length; i++) {
 				// line
 				if (this.allObjects[i].object == "line") {
@@ -699,44 +747,8 @@ export default {
 				if (obj.object == "line") {
 					this.info = "Line #" + obj.id + " selected";
 					this.currentSelectedObjectId = obj.id;
-					this.canvas.addEventListener("mousedown", function (e) {
-						let v0distance = euclideanDistance(
-							e.offsetX,
-							e.offsetY,
-							obj.v[0][0],
-							obj.v[0][1]
-						);
-						let v1distance = euclideanDistance(
-							e.offsetX,
-							e.offsetY,
-							obj.v[1][0],
-							obj.v[1][1]
-						);
-						this.startClickedCanvas = [e.offsetX, e.offsetY];
-						this.mouseClicked = true;
-						if (Math.max(v0distance, v1distance) === v1distance) {
-							obj.v[0] = obj.v[1];
-						}
-					});
-					this.canvas.addEventListener("mouseup", function () {
-						this.mouseClicked = false;
-					});
-					this.canvas.addEventListener(
-						"mousemove",
-						function (e) {
-							if (this.mouseClicked) {
-								obj.v[1] = [e.offsetX, e.offsetY];
-								this.drawScene();
-							}
-						}.bind(this),
-						false
-					);
-					this.lenOrSide = euclideanDistance(
-						obj.v[0][0],
-						obj.v[0][1],
-						obj.v[1][0],
-						obj.v[1][1]
-					);
+
+					document.getElementById("lenOrSide").disabled = true;
 					document.getElementById("tx").value = obj.v[0][0];
 					document.getElementById("txoutput").innerHTML = obj.v[0][0];
 					document.getElementById("ty").value = obj.v[0][1];
