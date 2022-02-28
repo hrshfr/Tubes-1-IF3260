@@ -1,6 +1,6 @@
 # Tubes-1-IF3260
 
-##Cara Menjalankan
+## Cara Menjalankan
 1. Pastikan Node.js sudah terinstall
 2. Clone repository ini
 3. Masuk ke dalam folder terluar dari repository ini
