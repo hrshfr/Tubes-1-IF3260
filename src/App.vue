@@ -79,7 +79,11 @@
 				/>
 				<output id="tyoutput">0</output>
 			</div>
-			<div id="container-slider" style="margin-top: 1rem">
+			<div
+				id="container-slider"
+				class="containerLengthOrSide"
+				style="margin-top: 1rem"
+			>
 				<label for="lenOrSide">Length/Side</label>
 				<input
 					id="lenOrSide"
@@ -723,32 +727,23 @@ export default {
 							);
 						}
 
-            let min_idx = vertexPolygonDistance.indexOf(Math.min(...vertexPolygonDistance))
-            let min_vertex = vertexPolygon[min_idx]
-            // let moved_idx = []
+						let min_idx = vertexPolygonDistance.indexOf(
+							Math.min(...vertexPolygonDistance)
+						);
+						let min_vertex = vertexPolygon[min_idx];
+						// let moved_idx = []
 
-            for(let i=0;i<obj.vertex.length-1;i++){
-              if(obj.vertex[i]==min_vertex[0] && obj.vertex[i+1]==min_vertex[1]){
-                obj.vertex[i] = this.mouseMoveCoordinate[0]
-                obj.vertex[i+1] = this.mouseMoveCoordinate[1]
-              }
-            }
-            // for(let i=0;i<vertexPolygon.length;i++){
-            //   if (vertexPolygon[i][0]==min_vertex[0] && vertexPolygon[i][1]==min_vertex[1]){
-            //     moved_idx.push(i)
-            //   }
-            // }
-
-            // for (let i=0;i<moved_idx.length;i++){
-
-            // }
-
-            // console.log(
-            //   "V " +
-            //     vertexPolygonDistance.indexOf(
-            //       Math.min(...vertexPolygonDistance)
-            //     )
-            // );
+						if (this.mouseMoveCoordinate.length !== 0) {
+							for (let i = 0; i < obj.vertex.length - 1; i++) {
+								if (
+									obj.vertex[i] == min_vertex[0] &&
+									obj.vertex[i + 1] == min_vertex[1]
+								) {
+									obj.vertex[i] = this.mouseMoveCoordinate[0];
+									obj.vertex[i + 1] = this.mouseMoveCoordinate[1];
+								}
+							}
+						}
 					}
 					this.drawScene();
 				}
@@ -1115,6 +1110,8 @@ export default {
 					this.info = "Line #" + obj.id + " selected";
 					this.currentSelectedObjectId = obj.id;
 					document.getElementById("lenOrSide").disabled = true;
+					document.querySelector(".containerLengthOrSide").style.display =
+						"none";
 					document.getElementById("tx").value = obj.v[0][0];
 					document.getElementById("txoutput").innerHTML = obj.v[0][0];
 					document.getElementById("ty").value = obj.v[0][1];
@@ -1139,6 +1136,8 @@ export default {
 					this.info = "Polygon #" + obj.id + " selected";
 					this.currentSelectedObjectId = obj.id;
 					document.getElementById("lenOrSide").disabled = true;
+					document.querySelector(".containerLengthOrSide").style.display =
+						"none";
 					document.getElementById("tx").value = obj.vertex[0];
 					document.getElementById("txoutput").innerHTML = obj.vertex[0];
 					document.getElementById("ty").value = obj.vertex[1];
