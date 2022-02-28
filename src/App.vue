@@ -1,5 +1,84 @@
 <template>
 	<div id="app">
+    <div v-if="isOpenHelp" style="background-color:rgba(0, 0, 0, 0.5);position:fixed;top:0;width:100vw;height:100vh;display:flex;justify-content:center;align-items:center">
+      <div style="background-color:#ffffff;width:70%;height:80%;display:flex;flex-flow:column;justify-content:center;align-items:center;padding:1rem 3rem 1rem 3rem">
+        <h1>Help</h1>
+        <div style="height:70%;overflow:auto;width:100%;">
+          <div class="items">
+            <h4>Drawing Line/Square/Rectangle</h4>
+            <ol>
+              <li>Pilih warna yang diinginkan</li>
+              <li>Pilih Action : Line/Square/Rectangle</li>
+              <li>Klik pada titik yang ingin dijadikan sebagai titik awal shape, lalu drag hingga ukuran shape yang diinginkan terbentuk</li>
+            </ol>
+          </div>
+          <div class="items">
+            <h4>Drawing Polygon</h4>
+            <ol>
+              <li>Pilih warna yang diinginkan</li>
+              <li>Pilih Action : Polygon</li>
+              <li>Klik titik sudut poligon yang diinginkan pada canvas hingga poligon yang diinginkan terbentuk</li>
+              <li>Polygon yang digambar harus bersifat convex</li>
+              <li>Klik tombol 'Stop Drawing Polygon' untuk selesai menggambar poligon</li>
+            </ol>
+          </div>
+          <div class="items">
+            <h4>Changing Shape Color</h4>
+            <ol>
+              <li>Pilih Action : Select Object</li>
+              <li>Klik objek tujuan pada canvas</li>
+              <li>Label objek yang diklik akan muncul pada kotak di atas control panel</li>
+              <li>Ganti warna melalui tool color picker yang disediakan</li>
+            </ol>
+          </div>
+          <div class="items">
+            <h4>Changing Square/Rectangle Length</h4>
+            <ol>
+              <li>Pilih Action : Select Object</li>
+              <li>Klik objek tujuan pada canvas</li>
+              <li>Label objek yang diklik akan muncul pada kotak di atas control panel</li>
+              <li>Atur panjang sisi melalui slide 'Side/Length yang disediakan pada control panel'</li>
+            </ol>
+          </div>
+          <div class="items">
+            <h4>Changing Line Length</h4>
+            <ol>
+              <li>Pilih Action : Select Object</li>
+              <li>Klik objek garis tujuan pada canvas</li>
+              <li>Ketika objek sudah terpilih, klik move vertex</li>
+              <li>Drag titik sudut hingga garis memiliki panjang yang diinginkan</li>
+              <li>Klik tombol 'Stop Move Vertex' untuk memberhentikan mode Move Vertex</li>
+            </ol>
+          </div>
+          <div class="items">
+            <h4>Move Vertices</h4>
+            <ol>
+              <li>Pilih Action : Select Object</li>
+              <li>Klik objek tujuan pada canvas</li>
+              <li>Ketika objek sudah terpilih, klik move vertex</li>
+              <li>Drag titik sudut hingga berpindah ke tempat yang diinginkan</li>
+              <li>Klik tombol 'Stop Move Vertex' untuk memberhentikan mode Move Vertex</li>
+            </ol>
+          </div>
+          <div class="items">
+            <h4>Save and Load File</h4>
+            <ol>
+              <li>Untuk save, klik tombol 'Save', kemudian file 'drawing.json' akan otomatis terunduh</li>
+              <li>Untuk load, klik tombol 'Open Saved File', kemudian pilih 'drawing.json' pada file explorer</li>
+            </ol>
+          </div>
+          <div class="items">
+            <h4>Translation</h4>
+            <ol>
+              <li>Select object tujuan</li>
+              <li>Geser posisi X dan Y dari objek dengan menggunaan slider 'Translation X' dan 'Translation Y' pada control panel</li>
+            </ol>
+          </div>
+        </div>
+        <button style="font-size:1.5rem" @click="isOpenHelp=false">Close Help</button>
+
+      </div>
+    </div>
 		<canvas width="900" @click="(e) => clickResponse(e)"></canvas>
 		<div id="container-menu">
 			<div>
@@ -10,10 +89,10 @@
 			</div>
 
 			<button
-				style="margin-top: 0.3rem; width: fit-content"
-				@click="printObject"
+				class="clearbtn "
+				@click="isOpenHelp=true"
 			>
-				Show all object
+				Open Help
 			</button>
 
 			<span style="margin-top: 1rem">Action: </span>
@@ -30,16 +109,28 @@
 					"
 				>
 					<option value="select">Select Object</option>
-					<option value="line">Line</option>
-					<option value="square">Square</option>
-					<option value="rectangle">Rectangle</option>
-					<option value="polygon">Polygon</option>
+					<option value="line">Draw Line</option>
+					<option value="square">Draw Square</option>
+					<option value="rectangle">Draw Rectangle</option>
+					<option value="polygon">Draw Polygon</option>
 				</select>
 				<button
 					v-if="currentSelectedObject == 'polygon'"
 					@click="stopDrawingPolygon()"
 				>
 					Stop Drawing Polygon
+				</button>
+				<button
+					v-if="currentSelectedObject == 'select'&&isMoveVertex==false"
+					@click="()=>isMoveVertex=true"
+				>
+					Move Vertex
+				</button>
+				<button
+					v-if="currentSelectedObject == 'select'&&isMoveVertex==true"
+					@click="()=>isMoveVertex=false"
+				>
+					Stop Move Vertex
 				</button>
 			</div>
 
@@ -107,48 +198,7 @@
 				/>
 			</div>
 			<div id="help" style="margin-top: 30px">
-				<div class="items">
-					<h4>Drawing Line/Square/Rectangle</h4>
-					<ol>
-						<li>Select Color</li>
-						<li>Select Action : Line/Square/Rectangle</li>
-						<li>Click and hold on the canvas then drag</li>
-					</ol>
-				</div>
-				<div class="items">
-					<h4>Drawing Polygon</h4>
-					<ol>
-						<li>Select Color</li>
-						<li>Select Action : Polygon</li>
-						<li>Click on the canvas to set the vertices of the polygon</li>
-					</ol>
-				</div>
-				<div class="items">
-					<h4>Changing Shape Color</h4>
-					<ol>
-						<li>Select Action : Select Object</li>
-						<li>Click the object on the canvas</li>
-						<li>The selected object will appear on the top right box</li>
-						<li>Select Color</li>
-					</ol>
-				</div>
-				<div class="items">
-					<h4>Changing Line/Square/Rectangle Length</h4>
-					<ol>
-						<li>Select Action : Select Object</li>
-						<li>Click the object on the canvas</li>
-						<li>The selected object will appear on the top right box</li>
-						<li>Drag the Length/Side slider</li>
-					</ol>
-				</div>
-				<div class="items">
-					<h4>Dragging Vertices</h4>
-					<ol>
-						<li>Select Action : Select Object</li>
-						<li>Click the object on the canvas</li>
-						<li>Drag the vertex</li>
-					</ol>
-				</div>
+
 			</div>
 		</div>
 	</div>
@@ -191,6 +241,8 @@ export default {
 		canvas: null,
 		info: "Information",
 		lenOrSide: 0,
+    isMoveVertex:false,
+    isOpenHelp:false
 	}),
 	mounted() {
 		this.canvas = document.querySelector("canvas");
@@ -337,7 +389,7 @@ export default {
 			this.drawScene();
 		},
 		mouseMoveCoordinate() {
-			if (this.currentSelectedObject == "select") {
+			if (this.currentSelectedObject == "select" && this.isMoveVertex==true) {
 				if (this.mouseClicked) {
 					let obj = this.allObjects.find(
 						(item) => item.id == this.currentSelectedObjectId
@@ -731,7 +783,6 @@ export default {
 							Math.min(...vertexPolygonDistance)
 						);
 						let min_vertex = vertexPolygon[min_idx];
-						// let moved_idx = []
 
 						if (this.mouseMoveCoordinate.length !== 0) {
 							for (let i = 0; i < obj.vertex.length - 1; i++) {
@@ -880,7 +931,8 @@ export default {
 		},
 		handleColor(e) {
 			this.currentColor = e.target.value;
-			if (this.currentClickedPos != []) {
+			if (this.currentClickedPos.length > 0){
+        console.log(this.currentClickedPos)
 				this.allObjects[this.currentClickedPos[1]].color = e.target.value;
 				this.drawScene();
 			}
@@ -1280,7 +1332,6 @@ export default {
 				reader.onload = (e) => {
 					this.clear();
 					this.allObjects = JSON.parse(e.target.result);
-					// console.log(this.allObjects)
 					this.drawScene();
 				};
 			}
@@ -1342,7 +1393,7 @@ canvas {
 	cursor: pointer;
 	color: #ffbf8b;
 	font-weight: bold;
-	font-size: 1em;
+	font-size: 0.8em;
 	text-decoration: none;
 	text-shadow: 0px 1px 0px #854629;
 }
@@ -1385,7 +1436,7 @@ canvas {
 	visibility: hidden;
 }
 .custom-file-input::before {
-	content: "Select some files";
+	content: "Open Saved File";
 	display: inline-block;
 	cursor: pointer;
 	text-shadow: 1px 1px #fff;
