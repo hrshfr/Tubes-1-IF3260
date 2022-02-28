@@ -1172,6 +1172,8 @@ export default {
 					this.info = "Rectangle #" + obj.id + " selected";
 					this.currentSelectedObjectId = obj.id;
 					this.lenOrSide = obj.width;
+					document.getElementById("lenOrSide").disabled = false;
+					document.querySelector(".containerLengthOrSide").style.display = "";
 					document.getElementById("tx").value = obj.x;
 					document.getElementById("txoutput").innerHTML = obj.x;
 					document.getElementById("ty").value = obj.y;
@@ -1180,6 +1182,8 @@ export default {
 					this.info = "Square #" + obj.id + " selected";
 					this.currentSelectedObjectId = obj.id;
 					this.lenOrSide = obj.side;
+					document.getElementById("lenOrSide").disabled = false;
+					document.querySelector(".containerLengthOrSide").style.display = "";
 					document.getElementById("tx").value = obj.x;
 					document.getElementById("txoutput").innerHTML = obj.x;
 					document.getElementById("ty").value = obj.y;
